@@ -18,4 +18,4 @@ https://www.cloudwego.io/zh/docs/hertz/tutorials/toolkit/usage-thrift/
 # 本地测试
 curl "http://localhost:8888/to_binary?number=64"
 # 测试EC2 服务器
-curl "http://api.skylar27.com/to_binary?number=64"
+curl "https://api.skylar27.com/to_binary?number=64"
