@@ -9,7 +9,11 @@ require (
 
 require github.com/golang-jwt/jwt/v5 v5.3.0
 
-require golang.org/x/crypto v0.43.0
+require (
+	golang.org/x/crypto v0.43.0
+	gorm.io/driver/postgres v1.6.0
+	gorm.io/gorm v1.31.0
+)
 
 require (
 	github.com/jackc/pgpassfile v1.0.0 // indirect
@@ -20,8 +24,6 @@ require (
 	github.com/jinzhu/now v1.1.5 // indirect
 	golang.org/x/sync v0.17.0 // indirect
 	golang.org/x/text v0.30.0 // indirect
-	gorm.io/driver/postgres v1.6.0 // indirect
-	gorm.io/gorm v1.31.0 // indirect
 )
 
 require (
