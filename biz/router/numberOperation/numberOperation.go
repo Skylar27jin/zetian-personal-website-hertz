@@ -17,5 +17,6 @@ import (
 func Register(r *server.Hertz) {
 
 	root := r.Group("/", rootMw()...)
+	root.GET("/decode_jwt", append(_decodejwtMw(), numberOperation.DecodeJWT)...)
 	root.GET("/to_binary", append(_gettobinaryMw(), numberOperation.GetToBinary)...)
 }

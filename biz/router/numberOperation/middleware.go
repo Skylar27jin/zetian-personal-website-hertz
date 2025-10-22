@@ -15,3 +15,8 @@ func _gettobinaryMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _decodejwtMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
