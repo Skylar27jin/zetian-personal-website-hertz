@@ -5,10 +5,10 @@ import (
 	"fmt"
 	"github.com/golang-jwt/jwt/v5"
 )
+//secret key for sigining JWT, should be later moved to a config file
+var jwtSecret = []byte("your_secret_key") 
 
-var jwtSecret = []byte("your_secret_key") // ⚠️ 替换为你自己的 secret key
-
-// ParseJWT parses and validates JWT token, returns payload claims
+// ParseJWT parses and validates JWT (as a string, not []byte), returns payload claims
 func ParseJWT(tokenString string) (map[string]interface{}, error) {
     token, err := jwt.Parse(tokenString, func(token *jwt.Token) (interface{}, error) {
         // 确保签名方法是 HMAC
@@ -41,6 +41,10 @@ func ParseJWT(tokenString string) (map[string]interface{}, error) {
     return nil, errors.New("failed to parse claims")
 }
 
+/*
+GenerateJWT generates a JWT token with given payLoad
+returned token is a string, not []byte
+*/
 func GenerateJWT(payLoad map[string]interface{}) (string, error) {
 
     claims := jwt.MapClaims{}

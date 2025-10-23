@@ -9,7 +9,6 @@ import (
 
 func main() {
 	h := server.Default()
-	//allow all port access
     h.Use(cors.Default())
 	register(h)
 	h.Spin()

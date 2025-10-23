@@ -1,12 +1,12 @@
 # 需要更新thrift: 
 # 不在 `$GOPATH` 下的项目通过工具提供的 `-module` 命令指定一个自定义 module 名称即可：
-hz new -module zetian-personal-website-hertz -idl idl/numberOperation.thrift -force
+hz new -module zetian-personal-website-hertz -idl idl/main.thrift -force
 go mod tidy
 # 查看 go.mod 中 github.com/apache/thrift 版本是否为 v0.13.0，如果不是则继续执行 2.2 小节剩余代码
 go mod edit -replace github.com/apache/thrift=github.com/apache/thrift@v0.13.0
 go mod tidy
 # 更新 thrift
-hz update -idl idl/numberOperation.thrift
+hz update -idl idl/user.thrift
 
 
 
