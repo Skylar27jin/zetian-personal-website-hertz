@@ -3,10 +3,10 @@ package jwt_pkg
 import (
 	"errors"
 	"fmt"
+	"zetian-personal-website-hertz/biz/config"
+
 	"github.com/golang-jwt/jwt/v5"
 )
-//secret key for sigining JWT, should be later moved to a config file
-var jwtSecret = []byte("your_secret_key") 
 
 // ParseJWT parses and validates JWT (as a string, not []byte), returns payload claims
 func ParseJWT(tokenString string) (map[string]interface{}, error) {
@@ -16,7 +16,7 @@ func ParseJWT(tokenString string) (map[string]interface{}, error) {
         if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
             return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
         }
-        return jwtSecret, nil
+        return []byte(config.GetGeneralConfig().JWT_Secret_Key), nil
     })
     if err != nil {
         return nil, err
@@ -53,5 +53,5 @@ func GenerateJWT(payLoad map[string]interface{}) (string, error) {
     }
 
     token := jwt.NewWithClaims(jwt.SigningMethodHS256, claims)
-    return token.SignedString(jwtSecret)
+    return token.SignedString([]byte(config.GetGeneralConfig().JWT_Secret_Key))
 }

@@ -1,0 +1,3 @@
+env: dev
+db_dsn: "postgres://dev_user:pass@localhost:5432/devdb"
+domain: "localhost"

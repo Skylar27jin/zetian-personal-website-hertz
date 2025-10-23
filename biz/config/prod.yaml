@@ -1,0 +1,4 @@
+env: prod
+db_dsn: "postgres://prod_user:pass@prod-db:5432/proddb"
+domain:  "skylar27.com"
+

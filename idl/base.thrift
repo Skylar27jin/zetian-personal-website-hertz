@@ -1,4 +1,4 @@
-namespace go main 
+namespace go base 
 
 include "user.thrift"
 include "numberOperation.thrift"
