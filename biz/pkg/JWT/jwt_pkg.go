@@ -28,6 +28,7 @@ func ParseJWT(tokenString string) (map[string]interface{}, error) {
         return nil, errors.New("invalid token")
     }
 
+
     // 从 token 中提取 payload（claims）
     //get payLoad from token
     if claims, ok := token.Claims.(jwt.MapClaims); ok {

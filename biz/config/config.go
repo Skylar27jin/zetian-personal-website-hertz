@@ -63,5 +63,14 @@ func GetGeneralConfig() GeneralConfig {
 
 func getPath(name string) string {
     cwd, _ := os.Getwd()
-    return filepath.Join(cwd, "biz", "config", name)
+
+
+    basePath := filepath.Join(cwd, "biz", "config", name)
+
+    // 如果在测试中（cwd 含 biz/service/...），则回退两层
+    if _, err := os.Stat(basePath); os.IsNotExist(err) {
+        basePath = filepath.Join(cwd, "..", "..", "config", name)
+    }
+
+    return basePath
 }
