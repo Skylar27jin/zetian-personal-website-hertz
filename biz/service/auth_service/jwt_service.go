@@ -13,7 +13,7 @@ GenerateUserJWT generates a JWT token for a user with given information
 now: if now is -1, use current time in the system as the issued at time
 username: not null
 email: not null
-validDuration: if validDuration is -1, 7 * 24 hours is used as the default validDuration
+validDuration: it is in second. if validDuration is -1, 7 * 24 hours is used as the default validDuration
 
 
 returns a encrypted token string like:

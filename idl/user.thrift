@@ -2,8 +2,8 @@ namespace go user
 
 
 struct LoginReq {
-    1: string email (api.query="email");
-    2: string password (api.query="password");
+    1: string email (api.body="email");
+    2: string password (api.body="password");
 }
 
 struct LoginResp {
@@ -14,9 +14,9 @@ struct LoginResp {
 }
 
 struct SignUpReq {
-    1: string username (api.query="username");
-    2: string email    (api.query="email");
-    3: string password (api.query="password");
+    1: string username (api.body="username");
+    2: string email    (api.body="email");
+    3: string password (api.body="password");
 }
 
 struct SignUpResp {

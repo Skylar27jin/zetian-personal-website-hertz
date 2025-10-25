@@ -6,7 +6,7 @@ import (
 	"fmt"
 	"zetian-personal-website-hertz/biz/domain"
 	"zetian-personal-website-hertz/biz/pkg/crypto"
-	repo "zetian-personal-website-hertz/biz/repository"
+	userRepo "zetian-personal-website-hertz/biz/repository/user_repo"
 
 	"gorm.io/gorm"
 )
@@ -21,7 +21,7 @@ func SignUp(ctx context.Context,userName, password, email string) error {
 	}
 
 	//first check if the email already exists
-	user, err := repo.GetUserByEmail(ctx, email)
+	user, err := userRepo.GetUserByEmail(ctx, email)
 	if err != nil && !errors.Is(err, gorm.ErrRecordNotFound) {
 		return err // 数据库出错
 	}
@@ -41,7 +41,7 @@ func SignUp(ctx context.Context,userName, password, email string) error {
 	}
 
 
-	err = repo.CreateUser(ctx, user)
+	err = userRepo.CreateUser(ctx, user)
 	if err != nil {
 		return err
 	}
@@ -50,17 +50,19 @@ func SignUp(ctx context.Context,userName, password, email string) error {
 }
 
 func Login(ctx context.Context, email, password string) (*domain.User, error) {
-	user, err := repo.GetUserByEmail(ctx, email)
+	user, err := userRepo.GetUserByEmail(ctx, email)
 	if err != nil || user == nil {
-		return nil, err
+		return nil, fmt.Errorf("email or password is incorrect")
 	}
 
 	IspasswordMatch := crypto.CheckPassword(password, user.Password)
 	if !IspasswordMatch {
-		return nil, fmt.Errorf("email or password is incorrect, please try again~")
+		return nil, fmt.Errorf("email or password is incorrect")
 	}
 
 	return user, nil
 
 }
+
+
 

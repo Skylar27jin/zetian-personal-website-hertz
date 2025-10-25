@@ -1,22 +1,23 @@
-package repository
+package user_repo
 
 import (
 	"context"
 	"zetian-personal-website-hertz/biz/domain"
+	DB "zetian-personal-website-hertz/biz/repository"
 )
 
 
 
 func CreateUser(ctx context.Context, user *domain.User) error {
-	return db.WithContext(ctx).Create(user).Error
+	return DB.DB.WithContext(ctx).Create(user).Error
 }
 
 func UpdateUser(ctx context.Context, user *domain.User) error {
-	return db.WithContext(ctx).Updates(user).Error
+	return DB.DB.WithContext(ctx).Updates(user).Error
 }
 func GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
     var user domain.User
-    err := db.WithContext(ctx).Where("username = ?", username).First(&user).Error
+    err := DB.DB.WithContext(ctx).Where("username = ?", username).First(&user).Error
     if err != nil {
         return nil, err
     }
@@ -25,9 +26,13 @@ func GetUserByUsername(ctx context.Context, username string) (*domain.User, erro
 
 func GetUserByEmail(ctx context.Context, email string) (*domain.User, error) {
 	var user domain.User
-	err := db.WithContext(ctx).Where("email = ?", email).First(&user).Error
+	err := DB.DB.WithContext(ctx).Where("email = ?", email).First(&user).Error
 	if err != nil {
 		return nil, err
 	}
 	return &user, nil
+}
+
+func GetTableName() string {
+	return "users"
 }

@@ -8,8 +8,8 @@ import (
 )
 
 type LoginReq struct {
-	Email    string `thrift:"email,1" json:"email" query:"email"`
-	Password string `thrift:"password,2" json:"password" query:"password"`
+	Email    string `thrift:"email,1" form:"email" json:"email"`
+	Password string `thrift:"password,2" form:"password" json:"password"`
 }
 
 func NewLoginReq() *LoginReq {
@@ -472,9 +472,9 @@ func (p *LoginResp) String() string {
 }
 
 type SignUpReq struct {
-	Username string `thrift:"username,1" json:"username" query:"username"`
-	Email    string `thrift:"email,2" json:"email" query:"email"`
-	Password string `thrift:"password,3" json:"password" query:"password"`
+	Username string `thrift:"username,1" form:"username" json:"username"`
+	Email    string `thrift:"email,2" form:"email" json:"email"`
+	Password string `thrift:"password,3" form:"password" json:"password"`
 }
 
 func NewSignUpReq() *SignUpReq {
