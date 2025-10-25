@@ -25,15 +25,62 @@ curl "https://api.skylar27.com/to_binary?number=64"
 
 
 # 本地起服务：
-## MAC设置环境变量
-export ENV=dev 
-## Windows设置环境变量
+
+Windows
 $env:ENV = "dev"
 go run .
 
+Mac
+ENV=dev go run .
+
+
 # 编译:
 
+windows
+$env:GOOS = "linux"
+$env:GOARCH = "amd64"
+go build -o server-linux
+
+mac
 GOOS=linux GOARCH=amd64 go build -o server-linux
 
-# 云端(ubuntu)起服务：
+
+# 云端EC2(ubuntu)起服务：
 ./server-linux
+
+
+# 云端EC2(ubuntu)升级服务：
+## 目前网站在关闭terminal后会持续运行（已被“持久化”）
+
+1. 找到旧进程 PID
+ps aux | grep server-linux
+一帮长这样：
+ubuntu      4919  0.0  1.1 1240800 11496 ?       Sl   Oct19   1:14 ./server-linux
+
+
+2. 停止旧进程（假设 PID 为 12345）
+kill 12345
+
+3. 在自己电脑上编译
+
+windows
+$env:GOOS = "linux"
+$env:GOARCH = "amd64"
+go build -o server-linux
+
+mac
+GOOS=linux GOARCH=amd64 go build -o server-linux
+
+
+4. 更新权限
+chmod +x server-linux
+
+5. 持久化运行服务：
+nohup env ENV=prod ./server-linux > server.log 2>&1 &
+
+6. 检查运行状态
+
+ps aux | grep server-linux
+tail -f server.log
+
+
