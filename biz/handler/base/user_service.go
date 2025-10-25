@@ -4,6 +4,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol"
@@ -50,7 +51,7 @@ func Login(ctx context.Context, c *app.RequestContext) {
 		"/",
 		config.GetSpecificConfig().Domain,
 		protocol.CookieSameSiteLaxMode,
-		false,
+		config.GetSpecificConfig().CookieSecure,
 		true) // HttpOnly Cookie
 
 	c.JSON(consts.StatusOK, user.LoginResp{
@@ -68,8 +69,38 @@ func SignUp(ctx context.Context, c *app.RequestContext) {
 		c.String(consts.StatusBadRequest, fmt.Sprintf("Invalid request: %v", err))
 		return
 	}
-	fmt.Println("username:", req.GetUsername(), "email:", req.GetEmail(), "password:", req.GetPassword())
-	err := userService.SignUp(ctx, req.GetUsername(), req.GetPassword(), req.GetEmail())
+	veriEmailJWT := string(c.Cookie("VeriEmailJWT"))
+
+	//verify whether the user has the veriEmail to signUp
+	email, veriEmailExp, err:= authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
+	if err != nil {
+		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error() + " Please get verification code first",
+		})
+		return
+	}
+	if email != req.GetEmail() {
+		//it means the user is copy pasting JWT from others' which is a hacking behavior
+		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+			IsSuccessful: false,
+			ErrorMessage: "Action Unauthorized",
+		})
+		clearVeriEmailCookie(c)
+		return
+	}
+	if veriEmailExp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+			IsSuccessful: false,
+			ErrorMessage: "The verification code has expired, get a new code first",
+		})
+		return
+	}
+
+
+
+
+	err = userService.SignUp(ctx, req.GetUsername(), req.GetPassword(), req.GetEmail())
 
 	if err != nil {
 		c.JSON(consts.StatusBadRequest, user.SignUpResp{
@@ -84,4 +115,11 @@ func SignUp(ctx context.Context, c *app.RequestContext) {
 		UserName :       req.GetUsername(),
 		Email:          req.GetEmail(),
 	})
+	//clear the veriEmailJWT, disabling user's ability to modify email
+	clearVeriEmailCookie(c)
+}
+
+func clearVeriEmailCookie(c *app.RequestContext) {
+    c.SetCookie("VeriEmailJWT", "", -1, "/", config.GetSpecificConfig().Domain,
+        protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
 }

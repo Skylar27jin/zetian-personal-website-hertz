@@ -1,7 +1,6 @@
 package jwt_pkg
 
 import (
-	"errors"
 	"fmt"
 	"zetian-personal-website-hertz/biz/config"
 
@@ -14,18 +13,12 @@ func ParseJWT(tokenString string) (map[string]interface{}, error) {
         // 确保签名方法是 HMAC
         //ensure the sigining method is HMAC
         if _, ok := token.Method.(*jwt.SigningMethodHMAC); !ok {
-            return nil, fmt.Errorf("unexpected signing method: %v", token.Header["alg"])
+            return nil, fmt.Errorf("the verification method is not HMAC")
         }
         return []byte(config.GetGeneralConfig().JWT_Secret_Key), nil
     })
     if err != nil {
         return nil, err
-    }
-
-    // token.Valid 表示签名和过期时间都检查通过
-    // token.Valid indicates that the signature and expiration time are valid
-    if !token.Valid {
-        return nil, errors.New("invalid token")
     }
 
 
@@ -39,7 +32,7 @@ func ParseJWT(tokenString string) (map[string]interface{}, error) {
         return payload, nil
     }
 
-    return nil, errors.New("failed to parse claims")
+    return nil, fmt.Errorf("the token is invalid")
 }
 
 /*

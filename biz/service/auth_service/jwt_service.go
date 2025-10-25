@@ -7,7 +7,6 @@ import (
 	jwt_pkg "zetian-personal-website-hertz/biz/pkg/JWT"
 )
 
-
 /*
 GenerateUserJWT generates a JWT token for a user with given information
 now: if now is -1, use current time in the system as the issued at time
@@ -88,7 +87,7 @@ func ParseUserJWT(ctx context.Context, tokenString string) (
 
 /*
 GenerateVeriEmailJWT generates a JWT token for client's cookie if the user verified the email.
-This JWT is used for user to change the password, bind email, unbind email, change password, etc.
+This JWT is used for user to execute action related to this email, including: change the password, bind email, unbind email, change password, etc.
 now: if now = -1, use current time in the system as the issued at time
 email: not null
 validDuration: in second, if valudation duration = -1, 15 min is used as the default valid duration

@@ -12,6 +12,7 @@ type SpecificConfig struct {
     Env          string `yaml:"env"`
     DB_DSN       string `yaml:"db_dsn"`
     Domain       string `yaml:"domain"`
+    CookieSecure bool `yaml:"cookie_secure"`
 }
 
 type GeneralConfig struct {
@@ -52,6 +53,7 @@ func GetSpecificConfig() SpecificConfig {
         Env:    specificCfg.Env,
         DB_DSN: specificCfg.DB_DSN,
         Domain: specificCfg.Domain,
+        CookieSecure: specificCfg.CookieSecure,
     }
 }
 
