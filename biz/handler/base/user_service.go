@@ -16,6 +16,13 @@ import (
 	userService "zetian-personal-website-hertz/biz/service/user_service"
 )
 
+/*
+All JWTs that are stored in cookie
+"JWT": user's basic information
+
+"VeriEmailJWT": 15min veriEmailJWT
+*/
+
 // Login .
 // @router /login [POST]
 func Login(ctx context.Context, c *app.RequestContext) {
@@ -72,11 +79,11 @@ func SignUp(ctx context.Context, c *app.RequestContext) {
 	veriEmailJWT := string(c.Cookie("VeriEmailJWT"))
 
 	//verify whether the user has the veriEmail to signUp
-	email, veriEmailExp, err:= authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
+	email, veriEmailExp, err := authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
 	if err != nil {
 		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
 			IsSuccessful: false,
-			ErrorMessage: err.Error() + " Please get verification code first",
+			ErrorMessage: err.Error() + ", Please get verification code first",
 		})
 		return
 	}
@@ -97,9 +104,6 @@ func SignUp(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-
-
-
 	err = userService.SignUp(ctx, req.GetUsername(), req.GetPassword(), req.GetEmail())
 
 	if err != nil {
@@ -112,14 +116,14 @@ func SignUp(ctx context.Context, c *app.RequestContext) {
 
 	c.JSON(consts.StatusOK, user.SignUpResp{
 		IsSuccessful: true,
-		UserName :       req.GetUsername(),
-		Email:          req.GetEmail(),
+		UserName:     req.GetUsername(),
+		Email:        req.GetEmail(),
 	})
 	//clear the veriEmailJWT, disabling user's ability to modify email
 	clearVeriEmailCookie(c)
 }
 
 func clearVeriEmailCookie(c *app.RequestContext) {
-    c.SetCookie("VeriEmailJWT", "", -1, "/", config.GetSpecificConfig().Domain,
-        protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
+	c.SetCookie("VeriEmailJWT", "", -1, "/", config.GetSpecificConfig().Domain,
+		protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
 }

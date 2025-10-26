@@ -8,6 +8,7 @@ import (
 	"github.com/apache/thrift/lib/go/thrift"
 	numberoperation "zetian-personal-website-hertz/biz/model/numberOperation"
 	"zetian-personal-website-hertz/biz/model/user"
+	"zetian-personal-website-hertz/biz/model/verification"
 )
 
 type UserService interface {
@@ -96,6 +97,57 @@ func (p *NumberOperationServiceClient) GetToBinary(ctx context.Context, request 
 	_args.Request = request
 	var _result NumberOperationServiceGetToBinaryResult
 	if err = p.Client_().Call(ctx, "GetToBinary", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+
+type VerificationService interface {
+	SendVeriCodeToEmail(ctx context.Context, request *verification.SendVeriCodeToEmailReq) (r *verification.SendVeriCodeToEmailResp, err error)
+	//1.Generate a 6 bit verification code; 2. send the code to the email; 3.store it to the db
+	VerifyEmailCode(ctx context.Context, request *verification.VerifyEmailCodeReq) (r *verification.VerifyEmailCodeResp, err error)
+}
+
+type VerificationServiceClient struct {
+	c thrift.TClient
+}
+
+func NewVerificationServiceClientFactory(t thrift.TTransport, f thrift.TProtocolFactory) *VerificationServiceClient {
+	return &VerificationServiceClient{
+		c: thrift.NewTStandardClient(f.GetProtocol(t), f.GetProtocol(t)),
+	}
+}
+
+func NewVerificationServiceClientProtocol(t thrift.TTransport, iprot thrift.TProtocol, oprot thrift.TProtocol) *VerificationServiceClient {
+	return &VerificationServiceClient{
+		c: thrift.NewTStandardClient(iprot, oprot),
+	}
+}
+
+func NewVerificationServiceClient(c thrift.TClient) *VerificationServiceClient {
+	return &VerificationServiceClient{
+		c: c,
+	}
+}
+
+func (p *VerificationServiceClient) Client_() thrift.TClient {
+	return p.c
+}
+
+func (p *VerificationServiceClient) SendVeriCodeToEmail(ctx context.Context, request *verification.SendVeriCodeToEmailReq) (r *verification.SendVeriCodeToEmailResp, err error) {
+	var _args VerificationServiceSendVeriCodeToEmailArgs
+	_args.Request = request
+	var _result VerificationServiceSendVeriCodeToEmailResult
+	if err = p.Client_().Call(ctx, "SendVeriCodeToEmail", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+func (p *VerificationServiceClient) VerifyEmailCode(ctx context.Context, request *verification.VerifyEmailCodeReq) (r *verification.VerifyEmailCodeResp, err error) {
+	var _args VerificationServiceVerifyEmailCodeArgs
+	_args.Request = request
+	var _result VerificationServiceVerifyEmailCodeResult
+	if err = p.Client_().Call(ctx, "VerifyEmailCode", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -1207,5 +1259,731 @@ func (p *NumberOperationServiceGetToBinaryResult) String() string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("NumberOperationServiceGetToBinaryResult(%+v)", *p)
+
+}
+
+type VerificationServiceProcessor struct {
+	processorMap map[string]thrift.TProcessorFunction
+	handler      VerificationService
+}
+
+func (p *VerificationServiceProcessor) AddToProcessorMap(key string, processor thrift.TProcessorFunction) {
+	p.processorMap[key] = processor
+}
+
+func (p *VerificationServiceProcessor) GetProcessorFunction(key string) (processor thrift.TProcessorFunction, ok bool) {
+	processor, ok = p.processorMap[key]
+	return processor, ok
+}
+
+func (p *VerificationServiceProcessor) ProcessorMap() map[string]thrift.TProcessorFunction {
+	return p.processorMap
+}
+
+func NewVerificationServiceProcessor(handler VerificationService) *VerificationServiceProcessor {
+	self := &VerificationServiceProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
+	self.AddToProcessorMap("SendVeriCodeToEmail", &verificationServiceProcessorSendVeriCodeToEmail{handler: handler})
+	self.AddToProcessorMap("VerifyEmailCode", &verificationServiceProcessorVerifyEmailCode{handler: handler})
+	return self
+}
+func (p *VerificationServiceProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	name, _, seqId, err := iprot.ReadMessageBegin()
+	if err != nil {
+		return false, err
+	}
+	if processor, ok := p.GetProcessorFunction(name); ok {
+		return processor.Process(ctx, seqId, iprot, oprot)
+	}
+	iprot.Skip(thrift.STRUCT)
+	iprot.ReadMessageEnd()
+	x := thrift.NewTApplicationException(thrift.UNKNOWN_METHOD, "Unknown function "+name)
+	oprot.WriteMessageBegin(name, thrift.EXCEPTION, seqId)
+	x.Write(oprot)
+	oprot.WriteMessageEnd()
+	oprot.Flush(ctx)
+	return false, x
+}
+
+type verificationServiceProcessorSendVeriCodeToEmail struct {
+	handler VerificationService
+}
+
+func (p *verificationServiceProcessorSendVeriCodeToEmail) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := VerificationServiceSendVeriCodeToEmailArgs{}
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+		oprot.WriteMessageBegin("SendVeriCodeToEmail", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return false, err
+	}
+
+	iprot.ReadMessageEnd()
+	var err2 error
+	result := VerificationServiceSendVeriCodeToEmailResult{}
+	var retval *verification.SendVeriCodeToEmailResp
+	if retval, err2 = p.handler.SendVeriCodeToEmail(ctx, args.Request); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing SendVeriCodeToEmail: "+err2.Error())
+		oprot.WriteMessageBegin("SendVeriCodeToEmail", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return true, err2
+	} else {
+		result.Success = retval
+	}
+	if err2 = oprot.WriteMessageBegin("SendVeriCodeToEmail", thrift.REPLY, seqId); err2 != nil {
+		err = err2
+	}
+	if err2 = result.Write(oprot); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+		err = err2
+	}
+	if err != nil {
+		return
+	}
+	return true, err
+}
+
+type verificationServiceProcessorVerifyEmailCode struct {
+	handler VerificationService
+}
+
+func (p *verificationServiceProcessorVerifyEmailCode) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := VerificationServiceVerifyEmailCodeArgs{}
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+		oprot.WriteMessageBegin("VerifyEmailCode", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return false, err
+	}
+
+	iprot.ReadMessageEnd()
+	var err2 error
+	result := VerificationServiceVerifyEmailCodeResult{}
+	var retval *verification.VerifyEmailCodeResp
+	if retval, err2 = p.handler.VerifyEmailCode(ctx, args.Request); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing VerifyEmailCode: "+err2.Error())
+		oprot.WriteMessageBegin("VerifyEmailCode", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return true, err2
+	} else {
+		result.Success = retval
+	}
+	if err2 = oprot.WriteMessageBegin("VerifyEmailCode", thrift.REPLY, seqId); err2 != nil {
+		err = err2
+	}
+	if err2 = result.Write(oprot); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+		err = err2
+	}
+	if err != nil {
+		return
+	}
+	return true, err
+}
+
+type VerificationServiceSendVeriCodeToEmailArgs struct {
+	Request *verification.SendVeriCodeToEmailReq `thrift:"request,1"`
+}
+
+func NewVerificationServiceSendVeriCodeToEmailArgs() *VerificationServiceSendVeriCodeToEmailArgs {
+	return &VerificationServiceSendVeriCodeToEmailArgs{}
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) InitDefault() {
+}
+
+var VerificationServiceSendVeriCodeToEmailArgs_Request_DEFAULT *verification.SendVeriCodeToEmailReq
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) GetRequest() (v *verification.SendVeriCodeToEmailReq) {
+	if !p.IsSetRequest() {
+		return VerificationServiceSendVeriCodeToEmailArgs_Request_DEFAULT
+	}
+	return p.Request
+}
+
+var fieldIDToName_VerificationServiceSendVeriCodeToEmailArgs = map[int16]string{
+	1: "request",
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) IsSetRequest() bool {
+	return p.Request != nil
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_VerificationServiceSendVeriCodeToEmailArgs[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) ReadField1(iprot thrift.TProtocol) error {
+	_field := verification.NewSendVeriCodeToEmailReq()
+	if err := _field.Read(iprot); err != nil {
+		return err
+	}
+	p.Request = _field
+	return nil
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("SendVeriCodeToEmail_args"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField1(oprot); err != nil {
+			fieldId = 1
+			goto WriteFieldError
+		}
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("request", thrift.STRUCT, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := p.Request.Write(oprot); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("VerificationServiceSendVeriCodeToEmailArgs(%+v)", *p)
+
+}
+
+type VerificationServiceSendVeriCodeToEmailResult struct {
+	Success *verification.SendVeriCodeToEmailResp `thrift:"success,0,optional"`
+}
+
+func NewVerificationServiceSendVeriCodeToEmailResult() *VerificationServiceSendVeriCodeToEmailResult {
+	return &VerificationServiceSendVeriCodeToEmailResult{}
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) InitDefault() {
+}
+
+var VerificationServiceSendVeriCodeToEmailResult_Success_DEFAULT *verification.SendVeriCodeToEmailResp
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) GetSuccess() (v *verification.SendVeriCodeToEmailResp) {
+	if !p.IsSetSuccess() {
+		return VerificationServiceSendVeriCodeToEmailResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+var fieldIDToName_VerificationServiceSendVeriCodeToEmailResult = map[int16]string{
+	0: "success",
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField0(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_VerificationServiceSendVeriCodeToEmailResult[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) ReadField0(iprot thrift.TProtocol) error {
+	_field := verification.NewSendVeriCodeToEmailResp()
+	if err := _field.Read(iprot); err != nil {
+		return err
+	}
+	p.Success = _field
+	return nil
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("SendVeriCodeToEmail_result"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField0(oprot); err != nil {
+			fieldId = 0
+			goto WriteFieldError
+		}
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Success.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
+}
+
+func (p *VerificationServiceSendVeriCodeToEmailResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("VerificationServiceSendVeriCodeToEmailResult(%+v)", *p)
+
+}
+
+type VerificationServiceVerifyEmailCodeArgs struct {
+	Request *verification.VerifyEmailCodeReq `thrift:"request,1"`
+}
+
+func NewVerificationServiceVerifyEmailCodeArgs() *VerificationServiceVerifyEmailCodeArgs {
+	return &VerificationServiceVerifyEmailCodeArgs{}
+}
+
+func (p *VerificationServiceVerifyEmailCodeArgs) InitDefault() {
+}
+
+var VerificationServiceVerifyEmailCodeArgs_Request_DEFAULT *verification.VerifyEmailCodeReq
+
+func (p *VerificationServiceVerifyEmailCodeArgs) GetRequest() (v *verification.VerifyEmailCodeReq) {
+	if !p.IsSetRequest() {
+		return VerificationServiceVerifyEmailCodeArgs_Request_DEFAULT
+	}
+	return p.Request
+}
+
+var fieldIDToName_VerificationServiceVerifyEmailCodeArgs = map[int16]string{
+	1: "request",
+}
+
+func (p *VerificationServiceVerifyEmailCodeArgs) IsSetRequest() bool {
+	return p.Request != nil
+}
+
+func (p *VerificationServiceVerifyEmailCodeArgs) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_VerificationServiceVerifyEmailCodeArgs[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *VerificationServiceVerifyEmailCodeArgs) ReadField1(iprot thrift.TProtocol) error {
+	_field := verification.NewVerifyEmailCodeReq()
+	if err := _field.Read(iprot); err != nil {
+		return err
+	}
+	p.Request = _field
+	return nil
+}
+
+func (p *VerificationServiceVerifyEmailCodeArgs) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("VerifyEmailCode_args"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField1(oprot); err != nil {
+			fieldId = 1
+			goto WriteFieldError
+		}
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *VerificationServiceVerifyEmailCodeArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("request", thrift.STRUCT, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := p.Request.Write(oprot); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *VerificationServiceVerifyEmailCodeArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("VerificationServiceVerifyEmailCodeArgs(%+v)", *p)
+
+}
+
+type VerificationServiceVerifyEmailCodeResult struct {
+	Success *verification.VerifyEmailCodeResp `thrift:"success,0,optional"`
+}
+
+func NewVerificationServiceVerifyEmailCodeResult() *VerificationServiceVerifyEmailCodeResult {
+	return &VerificationServiceVerifyEmailCodeResult{}
+}
+
+func (p *VerificationServiceVerifyEmailCodeResult) InitDefault() {
+}
+
+var VerificationServiceVerifyEmailCodeResult_Success_DEFAULT *verification.VerifyEmailCodeResp
+
+func (p *VerificationServiceVerifyEmailCodeResult) GetSuccess() (v *verification.VerifyEmailCodeResp) {
+	if !p.IsSetSuccess() {
+		return VerificationServiceVerifyEmailCodeResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+var fieldIDToName_VerificationServiceVerifyEmailCodeResult = map[int16]string{
+	0: "success",
+}
+
+func (p *VerificationServiceVerifyEmailCodeResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *VerificationServiceVerifyEmailCodeResult) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField0(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_VerificationServiceVerifyEmailCodeResult[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *VerificationServiceVerifyEmailCodeResult) ReadField0(iprot thrift.TProtocol) error {
+	_field := verification.NewVerifyEmailCodeResp()
+	if err := _field.Read(iprot); err != nil {
+		return err
+	}
+	p.Success = _field
+	return nil
+}
+
+func (p *VerificationServiceVerifyEmailCodeResult) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("VerifyEmailCode_result"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField0(oprot); err != nil {
+			fieldId = 0
+			goto WriteFieldError
+		}
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *VerificationServiceVerifyEmailCodeResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Success.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
+}
+
+func (p *VerificationServiceVerifyEmailCodeResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("VerificationServiceVerifyEmailCodeResult(%+v)", *p)
 
 }

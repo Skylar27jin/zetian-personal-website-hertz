@@ -20,4 +20,12 @@ func Register(r *server.Hertz) {
 	root.POST("/login", append(_loginMw(), base.Login)...)
 	root.POST("/signup", append(_signupMw(), base.SignUp)...)
 	root.GET("/to_binary", append(_gettobinaryMw(), base.GetToBinary)...)
+	{
+		_verification := root.Group("/verification", _verificationMw()...)
+		{
+			_email := _verification.Group("/email", _emailMw()...)
+			_email.POST("/send-code", append(_sendvericodetoemailMw(), base.SendVeriCodeToEmail)...)
+			_email.POST("/verify-code", append(_verifyemailcodeMw(), base.VerifyEmailCode)...)
+		}
+	}
 }

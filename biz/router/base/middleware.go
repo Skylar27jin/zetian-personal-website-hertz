@@ -25,3 +25,23 @@ func _gettobinaryMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _verificationMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _emailMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _sendvericodetoemailMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _verifyemailcodeMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

@@ -2,6 +2,7 @@ package auth_service
 
 import (
 	"context"
+	"log"
 	"testing"
 	"time"
 	"zetian-personal-website-hertz/biz/config"
@@ -65,7 +66,7 @@ func TestGenerateVeriEmailJWT(t *testing.T) {
 
 func TestParseVeriEmailJWT(t *testing.T) {
 	ctx := context.Background()
-	email := "skyjin@bu.edu"
+	email := "sample@sample.com"
 	now := time.Now().Unix()
 	validDuration := int64(10 * 60)
 	expectedExp := now + validDuration
@@ -74,10 +75,11 @@ func TestParseVeriEmailJWT(t *testing.T) {
 	token, err := GenerateVeriEmailJWT(ctx, now, email, validDuration)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
-
+	log.Println(token)
 	// ✅ 解析 token
 	emailGot, expGot, err := ParseVeriEmailJWT(ctx, token)
 	assert.NoError(t, err, "should parse valid JWT correctly")
 	assert.Equal(t, email, emailGot, "email should match")
 	assert.GreaterOrEqual(t, expGot, expectedExp-5, "exp should be close to expected value")
+
 }
