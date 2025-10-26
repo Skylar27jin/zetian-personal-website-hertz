@@ -17,6 +17,11 @@ https://www.cloudwego.io/zh/docs/hertz/tutorials/toolkit/usage-thrift/
 https://www.cloudwego.io/docs/hertz/tutorials/example/
 
 
+# 设置AWS CLI:
+go download aws cli（for send verification code to user） 
+https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+then set up IAM locally(ask zetian for more details)
+
 # 如何call hertz:
 # 本地测试
 curl "http://localhost:8888/to_binary?number=64"
