@@ -6,5 +6,4 @@ type EmailVerificationCode struct {
     Code      string `gorm:"size:10" json:"code"`
     CreatedAt int64  `json:"created_at"`
     ExpireAt  int64  `json:"expire_at"`
-    IsUsed    bool   `json:"is_used"`
 }

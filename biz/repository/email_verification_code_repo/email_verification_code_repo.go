@@ -24,7 +24,6 @@ import (
 // Behavior:
 //   - Inserts a new record if none exists for (email, purpose).
 //   - If an existing record is found, updates code, created_at, expire_at,
-//     and resets is_used = false (meaning the code becomes active again).
 //
 // Returns:
 //   - error: Any database execution error during insert/update.
@@ -35,13 +34,12 @@ func CreateOrUpdateCode(ctx context.Context, email, purpose, code string, now, v
 	exp := now + validDuration
 
 	return DB.DB.WithContext(ctx).Exec(`
-		INSERT INTO email_verification_code (email, purpose, code, created_at, expire_at, is_used)
+		INSERT INTO email_verification_code (email, purpose, code, created_at, expire_at)
 		VALUES (?, ?, ?, ?, ?, false)
 		ON DUPLICATE KEY UPDATE
 			code = VALUES(code),
 			created_at = VALUES(created_at),
-			expire_at = VALUES(expire_at),
-			is_used = false;
+			expire_at = VALUES(expire_at);
 	`, email, purpose, code, now, exp).Error
 }
 
@@ -56,14 +54,6 @@ func GetCodeByEmail(ctx context.Context, email string) (domain.EmailVerification
 		return domain.EmailVerificationCode{}, err
 	}
 	return record, nil
-}
-
-// MarkCodeAsUsed sets the code record's is_used to true.
-func MarkCodeAsUsed(ctx context.Context, email string) error {
-	return DB.DB.WithContext(ctx).
-		Model(&domain.EmailVerificationCode{}).
-		Where("email = ?", email).
-		Update("is_used", true).Error
 }
 
 // DeleteCode removes a code record (e.g., after successful verification or cleanup).

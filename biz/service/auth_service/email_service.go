@@ -43,13 +43,6 @@ func GetCodeByEmail(ctx context.Context, email string) (domain.EmailVerification
 	return email_verification_code_repo.GetCodeByEmail(ctx, email)
 }
 
-// MarkCodeAsUsed marks a verification code as used (is_used = true).
-//
-// Usually called after a successful verification to prevent reuse.
-func MarkCodeAsUsed(ctx context.Context, email string) error {
-	return email_verification_code_repo.MarkCodeAsUsed(ctx, email)
-}
-
 // DeleteCode removes a verification code record (e.g., after successful verification or expiration cleanup).
 func DeleteCode(ctx context.Context, email string) error {
 	return email_verification_code_repo.DeleteCode(ctx, email)
