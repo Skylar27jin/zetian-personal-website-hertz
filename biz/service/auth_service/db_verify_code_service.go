@@ -3,7 +3,6 @@ package auth_service
 import (
 	"context"
 	"time"
-	"zetian-personal-website-hertz/biz/domain"
 	"zetian-personal-website-hertz/biz/repository/email_verification_code_repo"
 )
 
@@ -34,13 +33,20 @@ func CreateOrUpdateCode(ctx context.Context, email, purpose, code string, now, v
 	return email_verification_code_repo.CreateOrUpdateCode(ctx, email, purpose, code, now, validDuration)
 }
 
-// GetCodeByEmail fetches the verification code record by email.
+// IsCodeValid checks whether the code according to email matches the record in DB
 //
 // Returns:
-//   - *domain.EmailVerificationCode: The matched record.
+//   - isMatch
 //   - error: If record not found or DB error occurs.
-func GetCodeByEmail(ctx context.Context, email string) (domain.EmailVerificationCode, error) {
-	return email_verification_code_repo.GetCodeByEmail(ctx, email)
+func IsCodeValid(ctx context.Context, code, email string, now int64) (bool, error) {
+	instance, err := email_verification_code_repo.GetCodeByEmail(ctx, email)
+	if err != nil {
+		return false, err
+	}
+	if now == -1 {
+		now = time.Now().Unix()
+	}
+	return code == instance.Code && email == instance.Email && now <= instance.ExpireAt, nil
 }
 
 // DeleteCode removes a verification code record (e.g., after successful verification or expiration cleanup).

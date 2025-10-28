@@ -4,15 +4,22 @@ package base
 
 import (
 	"context"
+	"time"
+
+	"zetian-personal-website-hertz/biz/config"
+	verification "zetian-personal-website-hertz/biz/model/verification"
+	"zetian-personal-website-hertz/biz/service/auth_service"
+	"zetian-personal-website-hertz/biz/service/email_service"
 
 	"github.com/cloudwego/hertz/pkg/app"
+	"github.com/cloudwego/hertz/pkg/protocol"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	verification "zetian-personal-website-hertz/biz/model/verification"
 )
 
 // SendVeriCodeToEmail .
 // @router /verification/email/send-code [POST]
 func SendVeriCodeToEmail(ctx context.Context, c *app.RequestContext) {
+	//1.Generate a 6 bit verification code; 2. send the code to the email; 3.store it to the db
 	var err error
 	var req verification.SendVeriCodeToEmailReq
 	err = c.BindAndValidate(&req)
@@ -21,16 +28,47 @@ func SendVeriCodeToEmail(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(verification.SendVeriCodeToEmailResp)
+	//1.Generate a 6 bit verification code;
+	code, err := email_service.GenerateVeriCode(6, true, false, false, false)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, (getFailedSendVeriCodeToEmailResp(err)))
+		return
+	}
+	//2.store it to the db
+	now := time.Now().Unix()
+	validDuration := int64(15 * 60)
 
+	err = auth_service.CreateOrUpdateCode(ctx, req.Email, req.Purpose, code, now, validDuration)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, (getFailedSendVeriCodeToEmailResp(err)))
+		return
+	}
 
-	
-	c.JSON(consts.StatusOK, resp)
+	//3. send the code to the email;
+	err = email_service.SendVeriCodeEmailTo(ctx, req.Email, req.Purpose, code)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, (getFailedSendVeriCodeToEmailResp(err)))
+		return
+	}
+
+	c.JSON(consts.StatusOK, verification.SendVeriCodeToEmailResp{
+		IsSuccessful: true,
+		ExpireAt:     now + validDuration,
+	})
+}
+
+func getFailedSendVeriCodeToEmailResp(err error) verification.SendVeriCodeToEmailResp {
+	return verification.SendVeriCodeToEmailResp{
+		IsSuccessful: false,
+		ErrorMessage: err.Error() + "Try again please",
+		ExpireAt:     int64(-1),
+	}
 }
 
 // VerifyEmailCode .
 // @router /verification/email/verify-code [POST]
 func VerifyEmailCode(ctx context.Context, c *app.RequestContext) {
+	//1. check if the code is correct; 2.if correct, disable this code and give the user a veriEmailJWT
 	var err error
 	var req verification.VerifyEmailCodeReq
 	err = c.BindAndValidate(&req)
@@ -39,7 +77,50 @@ func VerifyEmailCode(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(verification.VerifyEmailCodeResp)
+	//1. check if the code is correct
+	isMatch, err := auth_service.IsCodeValid(ctx, req.VerificationCode, req.Email, time.Now().Unix())
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, getFailedVerifyEmailCodeResp(err))
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	if !isMatch {
+		c.JSON(consts.StatusBadRequest, verification.VerifyEmailCodeResp{
+			IsSuccessful: false,
+			ErrorMessage: "The verification code is incorrect or the code has expired, please try again",
+		})
+		return
+	}
+
+
+	//remove this code record in db
+	err = auth_service.DeleteCode(ctx, req.Email)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, getFailedVerifyEmailCodeResp(err))
+		return
+	}
+
+	//set cookie
+	token, err := auth_service.GenerateVeriEmailJWT(ctx, time.Now().Unix(), req.Email, 15*60)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, getFailedVerifyEmailCodeResp(err))
+		return
+	}
+
+	c.SetCookie("VeriEmailJWT", token , 15*60, "/", config.GetSpecificConfig().Domain,
+		protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
+
+	c.JSON(consts.StatusOK, verification.VerifyEmailCodeResp{
+		IsSuccessful: true,
+	})
+	return 
+
+
+}
+
+func getFailedVerifyEmailCodeResp(err error)verification.VerifyEmailCodeResp {
+	return verification.VerifyEmailCodeResp{
+		IsSuccessful: false,
+		ErrorMessage: err.Error() + "Try again again",
+	}
 }

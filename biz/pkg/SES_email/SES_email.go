@@ -12,7 +12,7 @@ import (
 )
 
 const (
-	Sender    = "no-reply@skylar27.com"
+	Sender    = "skylar27-no-reply@skylar27.com"
 	AWSRegion = "us-east-2" // 你的 SES 域在 Ohio
 )
 
@@ -26,7 +26,7 @@ func InitSES() {
 	client = sesv2.NewFromConfig(cfg)
 }
 
-
+//send email to a custom email through aws ses
 func SendEmail(ctx context.Context, to, subject, body string) error {
 
 

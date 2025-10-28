@@ -18,9 +18,18 @@ https://www.cloudwego.io/docs/hertz/tutorials/example/
 
 
 # 设置AWS CLI:
-go download aws cli（for send verification code to user） 
+
+Why we need this: 
+to let hertz send verification code to user, aws needs to verify that the action is done by an account with permission.
+the cli helps aws verify the account.
+Let's download aws cli
 https://docs.aws.amazon.com/cli/latest/userguide/cli-chap-getting-started.html
+
 then set up IAM locally(ask zetian for more details)
+
+# 获取config:
+check biz/config, we can see config.go is trying to read many sensitive secret keys from some .yaml files.
+Those files are git ignored, so ask zetian for more details
 
 # 如何call hertz:
 # 本地测试

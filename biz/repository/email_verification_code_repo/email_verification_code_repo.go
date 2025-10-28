@@ -34,13 +34,14 @@ func CreateOrUpdateCode(ctx context.Context, email, purpose, code string, now, v
 	exp := now + validDuration
 
 	return DB.DB.WithContext(ctx).Exec(`
-		INSERT INTO email_verification_code (email, purpose, code, created_at, expire_at)
-		VALUES (?, ?, ?, ?, ?, false)
-		ON DUPLICATE KEY UPDATE
-			code = VALUES(code),
-			created_at = VALUES(created_at),
-			expire_at = VALUES(expire_at);
+		INSERT INTO email_verification_codes (email, purpose, code, created_at, expire_at)
+		VALUES (?, ?, ?, ?, ?)
+		ON CONFLICT (email) DO UPDATE SET
+			code = EXCLUDED.code,
+			created_at = EXCLUDED.created_at,
+			expire_at = EXCLUDED.expire_at;
 	`, email, purpose, code, now, exp).Error
+
 }
 
 // GetCodeByEmail fetches the verification code record by email and purpose.

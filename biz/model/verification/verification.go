@@ -8,10 +8,8 @@ import (
 )
 
 type SendVeriCodeToEmailReq struct {
-	// 用户邮箱地址
-	Email string `thrift:"email,1" form:"email" json:"email"`
-	// 验证用途（如 signup / reset_password / bind_email）
-	Purpose *string `thrift:"purpose,2,optional" form:"purpose" json:"purpose,omitempty"`
+	Email   string `thrift:"email,1" form:"email" json:"email"`
+	Purpose string `thrift:"purpose,2" form:"purpose" json:"purpose"`
 }
 
 func NewSendVeriCodeToEmailReq() *SendVeriCodeToEmailReq {
@@ -25,22 +23,13 @@ func (p *SendVeriCodeToEmailReq) GetEmail() (v string) {
 	return p.Email
 }
 
-var SendVeriCodeToEmailReq_Purpose_DEFAULT string
-
 func (p *SendVeriCodeToEmailReq) GetPurpose() (v string) {
-	if !p.IsSetPurpose() {
-		return SendVeriCodeToEmailReq_Purpose_DEFAULT
-	}
-	return *p.Purpose
+	return p.Purpose
 }
 
 var fieldIDToName_SendVeriCodeToEmailReq = map[int16]string{
 	1: "email",
 	2: "purpose",
-}
-
-func (p *SendVeriCodeToEmailReq) IsSetPurpose() bool {
-	return p.Purpose != nil
 }
 
 func (p *SendVeriCodeToEmailReq) Read(iprot thrift.TProtocol) (err error) {
@@ -120,11 +109,11 @@ func (p *SendVeriCodeToEmailReq) ReadField1(iprot thrift.TProtocol) error {
 }
 func (p *SendVeriCodeToEmailReq) ReadField2(iprot thrift.TProtocol) error {
 
-	var _field *string
+	var _field string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
 	p.Purpose = _field
 	return nil
@@ -180,16 +169,14 @@ WriteFieldEndError:
 }
 
 func (p *SendVeriCodeToEmailReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetPurpose() {
-		if err = oprot.WriteFieldBegin("purpose", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.Purpose); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("purpose", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.Purpose); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -207,12 +194,9 @@ func (p *SendVeriCodeToEmailReq) String() string {
 }
 
 type SendVeriCodeToEmailResp struct {
-	// 是否发送成功
-	IsSuccessful bool `thrift:"is_successful,1" form:"is_successful" json:"is_successful" query:"is_successful"`
-	// 失败时的错误信息（如 “邮箱格式错误” / “发送过于频繁”）
-	ErrorMessage *string `thrift:"error_message,2,optional" form:"error_message" json:"error_message,omitempty" query:"error_message"`
-	// 验证码过期时间（Unix 时间戳）
-	ExpireAt *int64 `thrift:"expire_at,3,optional" form:"expire_at" json:"expire_at,omitempty" query:"expire_at"`
+	IsSuccessful bool   `thrift:"is_successful,1" form:"is_successful" json:"is_successful" query:"is_successful"`
+	ErrorMessage string `thrift:"error_message,2" form:"error_message" json:"error_message" query:"error_message"`
+	ExpireAt     int64  `thrift:"expire_at,3" form:"expire_at" json:"expire_at" query:"expire_at"`
 }
 
 func NewSendVeriCodeToEmailResp() *SendVeriCodeToEmailResp {
@@ -226,36 +210,18 @@ func (p *SendVeriCodeToEmailResp) GetIsSuccessful() (v bool) {
 	return p.IsSuccessful
 }
 
-var SendVeriCodeToEmailResp_ErrorMessage_DEFAULT string
-
 func (p *SendVeriCodeToEmailResp) GetErrorMessage() (v string) {
-	if !p.IsSetErrorMessage() {
-		return SendVeriCodeToEmailResp_ErrorMessage_DEFAULT
-	}
-	return *p.ErrorMessage
+	return p.ErrorMessage
 }
 
-var SendVeriCodeToEmailResp_ExpireAt_DEFAULT int64
-
 func (p *SendVeriCodeToEmailResp) GetExpireAt() (v int64) {
-	if !p.IsSetExpireAt() {
-		return SendVeriCodeToEmailResp_ExpireAt_DEFAULT
-	}
-	return *p.ExpireAt
+	return p.ExpireAt
 }
 
 var fieldIDToName_SendVeriCodeToEmailResp = map[int16]string{
 	1: "is_successful",
 	2: "error_message",
 	3: "expire_at",
-}
-
-func (p *SendVeriCodeToEmailResp) IsSetErrorMessage() bool {
-	return p.ErrorMessage != nil
-}
-
-func (p *SendVeriCodeToEmailResp) IsSetExpireAt() bool {
-	return p.ExpireAt != nil
 }
 
 func (p *SendVeriCodeToEmailResp) Read(iprot thrift.TProtocol) (err error) {
@@ -343,22 +309,22 @@ func (p *SendVeriCodeToEmailResp) ReadField1(iprot thrift.TProtocol) error {
 }
 func (p *SendVeriCodeToEmailResp) ReadField2(iprot thrift.TProtocol) error {
 
-	var _field *string
+	var _field string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
 	p.ErrorMessage = _field
 	return nil
 }
 func (p *SendVeriCodeToEmailResp) ReadField3(iprot thrift.TProtocol) error {
 
-	var _field *int64
+	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
 	p.ExpireAt = _field
 	return nil
@@ -418,16 +384,14 @@ WriteFieldEndError:
 }
 
 func (p *SendVeriCodeToEmailResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetErrorMessage() {
-		if err = oprot.WriteFieldBegin("error_message", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.ErrorMessage); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("error_message", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.ErrorMessage); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -437,16 +401,14 @@ WriteFieldEndError:
 }
 
 func (p *SendVeriCodeToEmailResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if p.IsSetExpireAt() {
-		if err = oprot.WriteFieldBegin("expire_at", thrift.I64, 3); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteI64(*p.ExpireAt); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("expire_at", thrift.I64, 3); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI64(p.ExpireAt); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
@@ -464,9 +426,7 @@ func (p *SendVeriCodeToEmailResp) String() string {
 }
 
 type VerifyEmailCodeReq struct {
-	// 用户邮箱
-	Email string `thrift:"email,1" form:"email" json:"email"`
-	// 用户输入的验证码
+	Email            string `thrift:"email,1" form:"email" json:"email"`
 	VerificationCode string `thrift:"verification_code,2" form:"code" json:"code"`
 }
 
@@ -652,12 +612,8 @@ func (p *VerifyEmailCodeReq) String() string {
 }
 
 type VerifyEmailCodeResp struct {
-	// 是否验证成功
-	IsSuccessful bool `thrift:"is_successful,1" form:"is_successful" json:"is_successful" query:"is_successful"`
-	// 错误原因（如 “验证码错误” / “验证码已过期”）
-	ErrorMessage *string `thrift:"error_message,2,optional" form:"error_message" json:"error_message,omitempty" query:"error_message"`
-	// （可选）验证成功后颁发的 JWT（用于修改密码、注册等操作）
-	JwtToken *string `thrift:"jwt_token,3,optional" form:"jwt_token" json:"jwt_token,omitempty" query:"jwt_token"`
+	IsSuccessful bool   `thrift:"is_successful,1" form:"is_successful" json:"is_successful" query:"is_successful"`
+	ErrorMessage string `thrift:"error_message,2" form:"error_message" json:"error_message" query:"error_message"`
 }
 
 func NewVerifyEmailCodeResp() *VerifyEmailCodeResp {
@@ -671,36 +627,13 @@ func (p *VerifyEmailCodeResp) GetIsSuccessful() (v bool) {
 	return p.IsSuccessful
 }
 
-var VerifyEmailCodeResp_ErrorMessage_DEFAULT string
-
 func (p *VerifyEmailCodeResp) GetErrorMessage() (v string) {
-	if !p.IsSetErrorMessage() {
-		return VerifyEmailCodeResp_ErrorMessage_DEFAULT
-	}
-	return *p.ErrorMessage
-}
-
-var VerifyEmailCodeResp_JwtToken_DEFAULT string
-
-func (p *VerifyEmailCodeResp) GetJwtToken() (v string) {
-	if !p.IsSetJwtToken() {
-		return VerifyEmailCodeResp_JwtToken_DEFAULT
-	}
-	return *p.JwtToken
+	return p.ErrorMessage
 }
 
 var fieldIDToName_VerifyEmailCodeResp = map[int16]string{
 	1: "is_successful",
 	2: "error_message",
-	3: "jwt_token",
-}
-
-func (p *VerifyEmailCodeResp) IsSetErrorMessage() bool {
-	return p.ErrorMessage != nil
-}
-
-func (p *VerifyEmailCodeResp) IsSetJwtToken() bool {
-	return p.JwtToken != nil
 }
 
 func (p *VerifyEmailCodeResp) Read(iprot thrift.TProtocol) (err error) {
@@ -733,14 +666,6 @@ func (p *VerifyEmailCodeResp) Read(iprot thrift.TProtocol) (err error) {
 		case 2:
 			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField2(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 3:
-			if fieldTypeId == thrift.STRING {
-				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -788,24 +713,13 @@ func (p *VerifyEmailCodeResp) ReadField1(iprot thrift.TProtocol) error {
 }
 func (p *VerifyEmailCodeResp) ReadField2(iprot thrift.TProtocol) error {
 
-	var _field *string
+	var _field string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
 	} else {
-		_field = &v
+		_field = v
 	}
 	p.ErrorMessage = _field
-	return nil
-}
-func (p *VerifyEmailCodeResp) ReadField3(iprot thrift.TProtocol) error {
-
-	var _field *string
-	if v, err := iprot.ReadString(); err != nil {
-		return err
-	} else {
-		_field = &v
-	}
-	p.JwtToken = _field
 	return nil
 }
 
@@ -821,10 +735,6 @@ func (p *VerifyEmailCodeResp) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField2(oprot); err != nil {
 			fieldId = 2
-			goto WriteFieldError
-		}
-		if err = p.writeField3(oprot); err != nil {
-			fieldId = 3
 			goto WriteFieldError
 		}
 	}
@@ -863,41 +773,20 @@ WriteFieldEndError:
 }
 
 func (p *VerifyEmailCodeResp) writeField2(oprot thrift.TProtocol) (err error) {
-	if p.IsSetErrorMessage() {
-		if err = oprot.WriteFieldBegin("error_message", thrift.STRING, 2); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.ErrorMessage); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
+	if err = oprot.WriteFieldBegin("error_message", thrift.STRING, 2); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.ErrorMessage); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
 	}
 	return nil
 WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
-}
-
-func (p *VerifyEmailCodeResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if p.IsSetJwtToken() {
-		if err = oprot.WriteFieldBegin("jwt_token", thrift.STRING, 3); err != nil {
-			goto WriteFieldBeginError
-		}
-		if err := oprot.WriteString(*p.JwtToken); err != nil {
-			return err
-		}
-		if err = oprot.WriteFieldEnd(); err != nil {
-			goto WriteFieldEndError
-		}
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 3 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
 func (p *VerifyEmailCodeResp) String() string {
