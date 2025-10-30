@@ -92,7 +92,6 @@ func VerifyEmailCode(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-
 	//remove this code record in db
 	err = auth_service.DeleteCode(ctx, req.Email)
 	if err != nil {
@@ -107,20 +106,52 @@ func VerifyEmailCode(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	c.SetCookie("VeriEmailJWT", token , 15*60, "/", config.GetSpecificConfig().Domain,
+	c.SetCookie("VeriEmailJWT", token, 15*60, "/", config.GetSpecificConfig().Domain,
 		protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
 
 	c.JSON(consts.StatusOK, verification.VerifyEmailCodeResp{
 		IsSuccessful: true,
 	})
-	return 
-
 
 }
 
-func getFailedVerifyEmailCodeResp(err error)verification.VerifyEmailCodeResp {
+func getFailedVerifyEmailCodeResp(err error) verification.VerifyEmailCodeResp {
 	return verification.VerifyEmailCodeResp{
 		IsSuccessful: false,
 		ErrorMessage: err.Error() + "Try again again",
 	}
+}
+
+// Me .
+// @router /me [GET]
+func Me(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req verification.MeReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	JWT := string(c.Cookie("JWT"))
+	username, email, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
+	if err != nil {
+		c.JSON(consts.StatusUnauthorized, verification.MeResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error() + ": invalid JWT",
+		})
+	}
+	if exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, verification.MeResp{
+			IsSuccessful: false,
+			ErrorMessage: "Authentification info expired, please login again",
+		})
+	}
+
+	c.JSON(consts.StatusOK, verification.MeResp{
+		IsSuccessful: true,
+		ID:           int32(id),
+		Username:     username,
+		Email:        email,
+	})
 }

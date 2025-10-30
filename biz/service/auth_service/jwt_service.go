@@ -16,14 +16,16 @@ validDuration: it is in second. if validDuration is -1, 7 * 24 hours is used as 
 
 
 returns a encrypted token string like:
-{username: username,
+{
+id: userID,
+username: username,
 email: email,
 iat: now, //iat means issued at time
 exp: now + validDuration //exp means expiration time
 }
 
 */
-func GenerateUserJWT(ctx context.Context, now int64, username string, email string, validDuration int64) (string, error) {
+func GenerateUserJWT(ctx context.Context, now int64,  id int, username string, email string, validDuration int64) (string, error) {
 	if username == "" || email == "" {
 		return "", fmt.Errorf("username and email cannot be empty")
 	}
@@ -39,6 +41,7 @@ func GenerateUserJWT(ctx context.Context, now int64, username string, email stri
 		"email":    email,
 		"iat": 	now,
 		"exp":	now + validDuration,
+		"id": id,
 	}
 
 	token, err := jwt_pkg.GenerateJWT(payLoad) 
@@ -54,34 +57,39 @@ func ParseUserJWT(ctx context.Context, tokenString string) (
 	email string,
 	iat int64,
 	exp int64,
+	id int,
 	returnErr error) {
 
 	payload, err := jwt_pkg.ParseJWT(tokenString)
 	if err != nil {
-		return "", "", -2, -2, fmt.Errorf("when parsing user JWT: %v", err)
+		return "", "", -2, -2, -2, fmt.Errorf("when parsing user JWT: %v", err)
 	}
 
 	usernameInterface, ok1 := payload["username"]
 	emailInterface, ok2 := payload["email"]
 	iatInterface, ok3 := payload["iat"]
 	expInterface, ok4 := payload["exp"]
+	idInterface, ok5 := payload["id"]
 
 
-	if !ok1 || !ok2 || !ok3 || !ok4 {
-		return "", "", -3, -3, fmt.Errorf("invalid JWT: When parsing user JWT: missing fields")
+	if !ok1 || !ok2 || !ok3 || !ok4 || !ok5 {
+		return "", "", -3, -3, -3, fmt.Errorf("invalid JWT: When parsing user JWT: missing fields")
 	}
 
 	iat64, err := safelyConvertToInt64(iatInterface)
 	if err != nil {
-		return "", "", -3, -3, err
+		return "", "", -3, -3, -3, err
 	}
 	exp64, err := safelyConvertToInt64(expInterface)
 	if err != nil {
-		return "", "", -3, -3, err
+		return "", "", -3, -3, -3, err
+	}
+	id_got, err := safelyConvertToInt64(idInterface)
+	if err != nil {
+		return "", "", -3, -3, -3, err
 	}
 
-	return usernameInterface.(string), emailInterface.(string), iat64, exp64, nil
-
+	return usernameInterface.(string), emailInterface.(string), iat64, exp64, int(id_got), nil
 
 }
 

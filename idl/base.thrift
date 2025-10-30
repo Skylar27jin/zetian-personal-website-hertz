@@ -14,8 +14,12 @@ service NumberOperationService {
 }
 
 service VerificationService {
+
     verification.SendVeriCodeToEmailResp SendVeriCodeToEmail(1: verification.SendVeriCodeToEmailReq request) (api.post="/verification/email/send-code")
     //1.Generate a 6 bit verification code; 2. send the code to the email; 3.store it to the db
     verification.VerifyEmailCodeResp VerifyEmailCode(1: verification.VerifyEmailCodeReq request) (api.post="/verification/email/verify-code")
     //1. check if the code is correct; 2.if correct, disable this code and give the user a veriEmailJWT
+
+    verification.MeResp Me(1: verification.MeReq request) (api.get="/me")
+    //1, get "JWT" from Cookie; 2, verify whether cookie is not expired and JWT is not expired; 3, if both are not expired, return id, name, and email
 }

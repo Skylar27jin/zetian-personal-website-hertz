@@ -21,10 +21,11 @@ func TestGenerateUserJWT(t *testing.T) {
 	ctx := context.Background()
 	username := "nwang"
 	email := "skyjin@bu.edu"
+	id := 1
 	now := time.Now().Unix()
 	validDuration := int64(7 * 24 * 3600)
 
-	token, err := GenerateUserJWT(ctx, now, username, email, validDuration)
+	token, err := GenerateUserJWT(ctx, now, id, username, email, validDuration)
 	assert.NoError(t, err, "should generate JWT without error")
 	assert.NotEmpty(t, token, "token should not be empty")
 }
@@ -33,20 +34,22 @@ func TestParseUserJWT(t *testing.T) {
 	ctx := context.Background()
 	username := "nwang"
 	email := "skyjin@bu.edu"
+	id := 1
 	now := time.Now().Unix()
 	validDuration := int64(10 * 60)
 	expectedExp := now + validDuration
 
 	// 先生成
-	token, err := GenerateUserJWT(ctx, now, username, email, validDuration)
+	token, err := GenerateUserJWT(ctx, now, id, username, email, validDuration)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
 
 	// 再解析
-	usernameGot, emailGot, iatGot, expGot, err := ParseUserJWT(ctx, token)
+	usernameGot, emailGot, iatGot, expGot, idGot, err := ParseUserJWT(ctx, token)
 	assert.NoError(t, err, "should parse JWT successfully")
 	assert.Equal(t, username, usernameGot)
 	assert.Equal(t, email, emailGot)
+	assert.Equal(t, id, idGot)
 	assert.GreaterOrEqual(t, iatGot, now-1, "iat should be close to now")
 	assert.GreaterOrEqual(t, expGot, expectedExp-5, "exp should be close to expected")
 }

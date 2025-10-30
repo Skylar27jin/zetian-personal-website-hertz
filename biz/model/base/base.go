@@ -106,6 +106,8 @@ type VerificationService interface {
 	SendVeriCodeToEmail(ctx context.Context, request *verification.SendVeriCodeToEmailReq) (r *verification.SendVeriCodeToEmailResp, err error)
 	//1.Generate a 6 bit verification code; 2. send the code to the email; 3.store it to the db
 	VerifyEmailCode(ctx context.Context, request *verification.VerifyEmailCodeReq) (r *verification.VerifyEmailCodeResp, err error)
+	//1. check if the code is correct; 2.if correct, disable this code and give the user a veriEmailJWT
+	Me(ctx context.Context, request *verification.MeReq) (r *verification.MeResp, err error)
 }
 
 type VerificationServiceClient struct {
@@ -148,6 +150,15 @@ func (p *VerificationServiceClient) VerifyEmailCode(ctx context.Context, request
 	_args.Request = request
 	var _result VerificationServiceVerifyEmailCodeResult
 	if err = p.Client_().Call(ctx, "VerifyEmailCode", &_args, &_result); err != nil {
+		return
+	}
+	return _result.GetSuccess(), nil
+}
+func (p *VerificationServiceClient) Me(ctx context.Context, request *verification.MeReq) (r *verification.MeResp, err error) {
+	var _args VerificationServiceMeArgs
+	_args.Request = request
+	var _result VerificationServiceMeResult
+	if err = p.Client_().Call(ctx, "Me", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -1284,6 +1295,7 @@ func NewVerificationServiceProcessor(handler VerificationService) *VerificationS
 	self := &VerificationServiceProcessor{handler: handler, processorMap: make(map[string]thrift.TProcessorFunction)}
 	self.AddToProcessorMap("SendVeriCodeToEmail", &verificationServiceProcessorSendVeriCodeToEmail{handler: handler})
 	self.AddToProcessorMap("VerifyEmailCode", &verificationServiceProcessorVerifyEmailCode{handler: handler})
+	self.AddToProcessorMap("Me", &verificationServiceProcessorMe{handler: handler})
 	return self
 }
 func (p *VerificationServiceProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -1383,6 +1395,54 @@ func (p *verificationServiceProcessorVerifyEmailCode) Process(ctx context.Contex
 		result.Success = retval
 	}
 	if err2 = oprot.WriteMessageBegin("VerifyEmailCode", thrift.REPLY, seqId); err2 != nil {
+		err = err2
+	}
+	if err2 = result.Write(oprot); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.WriteMessageEnd(); err == nil && err2 != nil {
+		err = err2
+	}
+	if err2 = oprot.Flush(ctx); err == nil && err2 != nil {
+		err = err2
+	}
+	if err != nil {
+		return
+	}
+	return true, err
+}
+
+type verificationServiceProcessorMe struct {
+	handler VerificationService
+}
+
+func (p *verificationServiceProcessorMe) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := VerificationServiceMeArgs{}
+	if err = args.Read(iprot); err != nil {
+		iprot.ReadMessageEnd()
+		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
+		oprot.WriteMessageBegin("Me", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return false, err
+	}
+
+	iprot.ReadMessageEnd()
+	var err2 error
+	result := VerificationServiceMeResult{}
+	var retval *verification.MeResp
+	if retval, err2 = p.handler.Me(ctx, args.Request); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing Me: "+err2.Error())
+		oprot.WriteMessageBegin("Me", thrift.EXCEPTION, seqId)
+		x.Write(oprot)
+		oprot.WriteMessageEnd()
+		oprot.Flush(ctx)
+		return true, err2
+	} else {
+		result.Success = retval
+	}
+	if err2 = oprot.WriteMessageBegin("Me", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
 	if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -1985,5 +2045,299 @@ func (p *VerificationServiceVerifyEmailCodeResult) String() string {
 		return "<nil>"
 	}
 	return fmt.Sprintf("VerificationServiceVerifyEmailCodeResult(%+v)", *p)
+
+}
+
+type VerificationServiceMeArgs struct {
+	Request *verification.MeReq `thrift:"request,1"`
+}
+
+func NewVerificationServiceMeArgs() *VerificationServiceMeArgs {
+	return &VerificationServiceMeArgs{}
+}
+
+func (p *VerificationServiceMeArgs) InitDefault() {
+}
+
+var VerificationServiceMeArgs_Request_DEFAULT *verification.MeReq
+
+func (p *VerificationServiceMeArgs) GetRequest() (v *verification.MeReq) {
+	if !p.IsSetRequest() {
+		return VerificationServiceMeArgs_Request_DEFAULT
+	}
+	return p.Request
+}
+
+var fieldIDToName_VerificationServiceMeArgs = map[int16]string{
+	1: "request",
+}
+
+func (p *VerificationServiceMeArgs) IsSetRequest() bool {
+	return p.Request != nil
+}
+
+func (p *VerificationServiceMeArgs) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 1:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField1(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_VerificationServiceMeArgs[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *VerificationServiceMeArgs) ReadField1(iprot thrift.TProtocol) error {
+	_field := verification.NewMeReq()
+	if err := _field.Read(iprot); err != nil {
+		return err
+	}
+	p.Request = _field
+	return nil
+}
+
+func (p *VerificationServiceMeArgs) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("Me_args"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField1(oprot); err != nil {
+			fieldId = 1
+			goto WriteFieldError
+		}
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *VerificationServiceMeArgs) writeField1(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("request", thrift.STRUCT, 1); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := p.Request.Write(oprot); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
+}
+
+func (p *VerificationServiceMeArgs) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("VerificationServiceMeArgs(%+v)", *p)
+
+}
+
+type VerificationServiceMeResult struct {
+	Success *verification.MeResp `thrift:"success,0,optional"`
+}
+
+func NewVerificationServiceMeResult() *VerificationServiceMeResult {
+	return &VerificationServiceMeResult{}
+}
+
+func (p *VerificationServiceMeResult) InitDefault() {
+}
+
+var VerificationServiceMeResult_Success_DEFAULT *verification.MeResp
+
+func (p *VerificationServiceMeResult) GetSuccess() (v *verification.MeResp) {
+	if !p.IsSetSuccess() {
+		return VerificationServiceMeResult_Success_DEFAULT
+	}
+	return p.Success
+}
+
+var fieldIDToName_VerificationServiceMeResult = map[int16]string{
+	0: "success",
+}
+
+func (p *VerificationServiceMeResult) IsSetSuccess() bool {
+	return p.Success != nil
+}
+
+func (p *VerificationServiceMeResult) Read(iprot thrift.TProtocol) (err error) {
+
+	var fieldTypeId thrift.TType
+	var fieldId int16
+
+	if _, err = iprot.ReadStructBegin(); err != nil {
+		goto ReadStructBeginError
+	}
+
+	for {
+		_, fieldTypeId, fieldId, err = iprot.ReadFieldBegin()
+		if err != nil {
+			goto ReadFieldBeginError
+		}
+		if fieldTypeId == thrift.STOP {
+			break
+		}
+
+		switch fieldId {
+		case 0:
+			if fieldTypeId == thrift.STRUCT {
+				if err = p.ReadField0(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		default:
+			if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		}
+		if err = iprot.ReadFieldEnd(); err != nil {
+			goto ReadFieldEndError
+		}
+	}
+	if err = iprot.ReadStructEnd(); err != nil {
+		goto ReadStructEndError
+	}
+
+	return nil
+ReadStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct begin error: ", p), err)
+ReadFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
+ReadFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_VerificationServiceMeResult[fieldId]), err)
+SkipFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
+
+ReadFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read field end error", p), err)
+ReadStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
+}
+
+func (p *VerificationServiceMeResult) ReadField0(iprot thrift.TProtocol) error {
+	_field := verification.NewMeResp()
+	if err := _field.Read(iprot); err != nil {
+		return err
+	}
+	p.Success = _field
+	return nil
+}
+
+func (p *VerificationServiceMeResult) Write(oprot thrift.TProtocol) (err error) {
+	var fieldId int16
+	if err = oprot.WriteStructBegin("Me_result"); err != nil {
+		goto WriteStructBeginError
+	}
+	if p != nil {
+		if err = p.writeField0(oprot); err != nil {
+			fieldId = 0
+			goto WriteFieldError
+		}
+	}
+	if err = oprot.WriteFieldStop(); err != nil {
+		goto WriteFieldStopError
+	}
+	if err = oprot.WriteStructEnd(); err != nil {
+		goto WriteStructEndError
+	}
+	return nil
+WriteStructBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct begin error: ", p), err)
+WriteFieldError:
+	return thrift.PrependError(fmt.Sprintf("%T write field %d error: ", p, fieldId), err)
+WriteFieldStopError:
+	return thrift.PrependError(fmt.Sprintf("%T write field stop error: ", p), err)
+WriteStructEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
+}
+
+func (p *VerificationServiceMeResult) writeField0(oprot thrift.TProtocol) (err error) {
+	if p.IsSetSuccess() {
+		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Success.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
+}
+
+func (p *VerificationServiceMeResult) String() string {
+	if p == nil {
+		return "<nil>"
+	}
+	return fmt.Sprintf("VerificationServiceMeResult(%+v)", *p)
 
 }

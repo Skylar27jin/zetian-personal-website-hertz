@@ -45,3 +45,8 @@ func _verifyemailcodeMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _meMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
