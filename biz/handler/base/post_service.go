@@ -18,10 +18,8 @@ import (
 // GetPostByID .
 // @router /post/get [GET]
 func GetPostByID(ctx context.Context, c *app.RequestContext) {
-	var err error
 	var req post.GetPostByIDReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
+	if err := c.BindAndValidate(&req); err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
@@ -35,7 +33,18 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	domainPost, err := post_service.GetPostByID(ctx, req.ID)
+	//get viewer from JWT
+	viewerID := int64(-1)
+	JWT := string(c.Cookie("JWT"))
+	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
+	if err == nil &&  exp > time.Now().Unix() {
+		viewerID = int64(id)
+	}
+	// 若 JWT 不存在 / 解析失败 / 过期，则 viewerID 保持 -1，
+	// 对应 service 中 IsLikedByUser / IsFavByUser 会默认 false。
+
+	// 2) get post with like/fav counts and user flags
+	domainPostFull, err := post_service.GetPostwLikeFavAndUserFlags(ctx, req.ID, viewerID)
 	if err != nil {
 		c.JSON(consts.StatusBadRequest, post.GetPostByIDResp{
 			IsSuccessful: false,
@@ -44,7 +53,9 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	thriftPost := domain.FromDomainPostToThriftPost(*domainPost)
+
+	// 3) convert to thrift.Post
+	thriftPost := domain.FromDomainPostwLikeFavAndUserToThriftPost(*domainPostFull)
 
 	c.JSON(consts.StatusOK, post.GetPostByIDResp{
 		IsSuccessful: true,
@@ -146,9 +157,6 @@ func GetSchoolRecentPosts(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, resp)
 }
 
-
-// GetPersonalRecentPosts .
-// @router /post/personal [GET]
 // GetPersonalRecentPosts
 // @router /post/personal [GET]
 func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
@@ -162,8 +170,15 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	
-	posts, err := post_service.GetPersonalRecentPosts(ctx, req.UserID, req.Before, int(req.Limit))
+	//get viewer from JWT
+	viewerID := int64(-1)
+	JWT := string(c.Cookie("JWT"))
+	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
+	if err == nil &&  exp > time.Now().Unix() {
+		viewerID = int64(id)
+	}
+
+	posts, err := post_service.GetPersonalRecentPostsWithLikeFavAndUserFlags(ctx, req.UserID, viewerID, req.Before, int(req.Limit))
 	if err != nil {
 		c.JSON(consts.StatusOK, post.GetPersonalRecentPostsResp{
 			IsSuccessful: false,
@@ -174,19 +189,17 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// 3️⃣ convert to []thrift.Post
-	thriftPosts := domain.FromDomainPostListToThriftPostList(posts)
-	var thriftPostPointers []*post.Post
-	for _, thriftPost := range thriftPosts {
-		thriftPostPointers = append(thriftPostPointers, &thriftPost)
+	thriftPosts := domain.FromDomainPostwLikeFavAndUserListToThriftPostList(posts)
+	thriftPostPointers := make([]*post.Post, len(thriftPosts))
+	for i := range thriftPosts {
+		thriftPostPointers[i] = &thriftPosts[i]
 	}
-
 
 	resp := post.GetPersonalRecentPostsResp{
 		IsSuccessful: true,
 		ErrorMessage: "",
 		Posts:        thriftPostPointers,
 	}
-
 
 	c.JSON(consts.StatusOK, resp)
 }
