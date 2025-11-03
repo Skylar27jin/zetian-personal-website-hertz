@@ -15,7 +15,16 @@ func main() {
 	SES_email.InitSES() //初始化SES 发邮件服务
 	
 	h := server.Default()
-    h.Use(cors.Default())
+	h.Use(cors.New(cors.Config{
+		AllowOrigins: []string{
+			"http://localhost:5173",   // 本地调试
+			"https://skylar27.com",    // ✅ 线上正式域名
+		},
+		AllowMethods:     []string{"GET", "POST", "OPTIONS"},
+		AllowHeaders:     []string{"Content-Type", "Authorization"},
+		ExposeHeaders:    []string{"Content-Length"},
+		AllowCredentials: true, // ✅ 允许跨域携带 Cookie
+	}))
 	register(h)
 
 	h.Spin()

@@ -112,7 +112,7 @@ nohup env ENV=prod ./server-linux > server.log 2>&1 &
 7. 检查运行状态
 
 ```
-ps aux | grep server-linux
+ps aux | grep server-linux 
 tail -f server.log
 ```
 
