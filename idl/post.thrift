@@ -95,3 +95,27 @@ struct GetPersonalRecentPostsResp {
     2: string errorMessage;
     3: list<Post> posts;
 }
+
+struct LikePostReq {
+    1: i64 user_id;
+    2: i64 post_id;
+}
+struct FavPostReq {
+    1: i64 user_id;
+    2: i64 post_id;
+}
+struct UnlikePostReq {
+    1: i64 user_id;
+    2: i64 post_id;
+}
+struct UnfavPostReq {
+    1: i64 user_id;
+    2: i64 post_id;
+}
+
+
+struct UserFlagPostResq {
+    1: bool isSuccessful;
+    2: string errorMessage;
+}
+

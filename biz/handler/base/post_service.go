@@ -37,7 +37,7 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 	viewerID := int64(-1)
 	JWT := string(c.Cookie("JWT"))
 	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
-	if err == nil &&  exp > time.Now().Unix() {
+	if err == nil && exp > time.Now().Unix() {
 		viewerID = int64(id)
 	}
 	// 若 JWT 不存在 / 解析失败 / 过期，则 viewerID 保持 -1，
@@ -174,7 +174,7 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 	viewerID := int64(-1)
 	JWT := string(c.Cookie("JWT"))
 	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
-	if err == nil &&  exp > time.Now().Unix() {
+	if err == nil && exp > time.Now().Unix() {
 		viewerID = int64(id)
 	}
 
@@ -202,4 +202,131 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 	}
 
 	c.JSON(consts.StatusOK, resp)
+}
+
+// LikePost .
+// @router /post/like [POST]
+func LikePost(ctx context.Context, c *app.RequestContext) {
+	var req post.LikePostReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(consts.StatusBadRequest, newFailedUserFlagPostResq("Invalid request: "+err.Error()))
+		return
+	}
+
+	// 从 JWT 拿 userID（失败时内部会返回 401 并结束）
+	userID, ok := getViewerIDFromJWTOrWriteUnauthorized(ctx, c)
+	if !ok {
+		return
+	}
+
+	// service 层：只信 JWT 的 userID，忽略 req.UserId
+	if err := post_service.LikePost(ctx, userID, req.PostID); err != nil {
+		c.JSON(consts.StatusOK, newFailedUserFlagPostResq(err.Error()))
+		return
+	}
+
+	c.JSON(consts.StatusOK, newSuccessUserFlagPostResq())
+}
+
+// UnlikePost .
+// @router /post/unlike [POST]
+func UnlikePost(ctx context.Context, c *app.RequestContext) {
+	var req post.UnlikePostReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(consts.StatusBadRequest, newFailedUserFlagPostResq("Invalid request: "+err.Error()))
+		return
+	}
+
+	userID, ok := getViewerIDFromJWTOrWriteUnauthorized(ctx, c)
+	if !ok {
+		return
+	}
+
+	if err := post_service.UnlikePost(ctx, userID, req.PostID); err != nil {
+		c.JSON(consts.StatusOK, newFailedUserFlagPostResq(err.Error()))
+		return
+	}
+
+	c.JSON(consts.StatusOK, newSuccessUserFlagPostResq())
+}
+
+// FavPost .
+// @router /post/fav [POST]
+func FavPost(ctx context.Context, c *app.RequestContext) {
+	var req post.FavPostReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(consts.StatusBadRequest, newFailedUserFlagPostResq("Invalid request: "+err.Error()))
+		return
+	}
+
+	userID, ok := getViewerIDFromJWTOrWriteUnauthorized(ctx, c)
+	if !ok {
+		return
+	}
+
+	if err := post_service.FavoritePost(ctx, userID, req.PostID); err != nil {
+		c.JSON(consts.StatusOK, newFailedUserFlagPostResq(err.Error()))
+		return
+	}
+
+	c.JSON(consts.StatusOK, newSuccessUserFlagPostResq())
+}
+
+// UnfavPost .
+// @router /post/unfav [POST]
+func UnfavPost(ctx context.Context, c *app.RequestContext) {
+	var req post.UnfavPostReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(consts.StatusBadRequest, newFailedUserFlagPostResq("Invalid request: "+err.Error()))
+		return
+	}
+
+	userID, ok := getViewerIDFromJWTOrWriteUnauthorized(ctx, c)
+	if !ok {
+		return
+	}
+
+	if err := post_service.UnfavoritePost(ctx, userID, req.PostID); err != nil {
+		c.JSON(consts.StatusOK, newFailedUserFlagPostResq(err.Error()))
+		return
+	}
+
+	c.JSON(consts.StatusOK, newSuccessUserFlagPostResq())
+}
+
+// helper: build a failed UserFlagPostResq
+func newFailedUserFlagPostResq(msg string) post.UserFlagPostResq {
+	return post.UserFlagPostResq{
+		IsSuccessful: false,
+		ErrorMessage: msg,
+	}
+}
+
+// helper: build a success UserFlagPostResq
+func newSuccessUserFlagPostResq() post.UserFlagPostResq {
+	return post.UserFlagPostResq{
+		IsSuccessful: true,
+		ErrorMessage: "",
+	}
+}
+
+// helper: get viewerID from JWT cookie.
+//
+// 返回：
+//   - viewerID: 合法用户 ID
+//   - ok:       是否成功；如果 false，函数内部已经写了 Unauthorized 响应
+func getViewerIDFromJWTOrWriteUnauthorized(
+	ctx context.Context,
+	c *app.RequestContext,
+) (int64, bool) {
+	jwtStr := string(c.Cookie("JWT"))
+
+	_, _, _, exp, uid, errJWT := auth_service.ParseUserJWT(ctx, jwtStr)
+	if errJWT != nil || exp <= time.Now().Unix() {
+		// 解析失败或者过期
+		c.JSON(consts.StatusUnauthorized, newFailedUserFlagPostResq("Unauthorized"))
+		return -1, false
+	}
+
+	return int64(uid), true
 }

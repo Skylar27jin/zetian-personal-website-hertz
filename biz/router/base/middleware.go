@@ -95,3 +95,23 @@ func _getpersonalrecentpostsMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _favpostMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _unfavpostMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _likepostMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _unlikepostMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

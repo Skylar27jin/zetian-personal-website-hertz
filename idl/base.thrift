@@ -38,4 +38,12 @@ service PostService {
     post.GetSchoolRecentPostsResp GetSchoolRecentPosts(1: post.GetSchoolRecentPostsReq request) (api.get="/post/school/recent")
 
     post.GetPersonalRecentPostsReq GetPersonalRecentPosts(1: post.GetPersonalRecentPostsResp request) (api.get="/post/personal")
+
+    //like, unlike, fav, unfav will authorize user based on the JWT
+    //user_id likes post_id, but will check whether user_id == JWT
+
+    post.LikePostReq LikePost(1: post.UserFlagPostResq request) (api.post="/post/like")
+    post.UnlikePostReq UnlikePost(1: post.UserFlagPostResq request) (api.post="/post/unlike")
+    post.FavPostReq FavPost(1: post.UserFlagPostResq request) (api.post="/post/fav")
+    post.UnfavPostReq UnfavPost(1: post.UserFlagPostResq request) (api.post="/post/unfav")
 }
