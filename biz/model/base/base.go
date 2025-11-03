@@ -176,7 +176,7 @@ type PostService interface {
 
 	GetSchoolRecentPosts(ctx context.Context, request *post.GetSchoolRecentPostsReq) (r *post.GetSchoolRecentPostsResp, err error)
 
-	GetAllPersonalPosts(ctx context.Context, request *post.GetAllPersonalPostsReq) (r *post.GetAllPersonalPostsResp, err error)
+	GetPersonalRecentPosts(ctx context.Context, request *post.GetPersonalRecentPostsResp) (r *post.GetPersonalRecentPostsReq, err error)
 }
 
 type PostServiceClient struct {
@@ -250,11 +250,11 @@ func (p *PostServiceClient) GetSchoolRecentPosts(ctx context.Context, request *p
 	}
 	return _result.GetSuccess(), nil
 }
-func (p *PostServiceClient) GetAllPersonalPosts(ctx context.Context, request *post.GetAllPersonalPostsReq) (r *post.GetAllPersonalPostsResp, err error) {
-	var _args PostServiceGetAllPersonalPostsArgs
+func (p *PostServiceClient) GetPersonalRecentPosts(ctx context.Context, request *post.GetPersonalRecentPostsResp) (r *post.GetPersonalRecentPostsReq, err error) {
+	var _args PostServiceGetPersonalRecentPostsArgs
 	_args.Request = request
-	var _result PostServiceGetAllPersonalPostsResult
-	if err = p.Client_().Call(ctx, "GetAllPersonalPosts", &_args, &_result); err != nil {
+	var _result PostServiceGetPersonalRecentPostsResult
+	if err = p.Client_().Call(ctx, "GetPersonalRecentPosts", &_args, &_result); err != nil {
 		return
 	}
 	return _result.GetSuccess(), nil
@@ -2463,7 +2463,7 @@ func NewPostServiceProcessor(handler PostService) *PostServiceProcessor {
 	self.AddToProcessorMap("EditPost", &postServiceProcessorEditPost{handler: handler})
 	self.AddToProcessorMap("DeletePost", &postServiceProcessorDeletePost{handler: handler})
 	self.AddToProcessorMap("GetSchoolRecentPosts", &postServiceProcessorGetSchoolRecentPosts{handler: handler})
-	self.AddToProcessorMap("GetAllPersonalPosts", &postServiceProcessorGetAllPersonalPosts{handler: handler})
+	self.AddToProcessorMap("GetPersonalRecentPosts", &postServiceProcessorGetPersonalRecentPosts{handler: handler})
 	return self
 }
 func (p *PostServiceProcessor) Process(ctx context.Context, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
@@ -2724,16 +2724,16 @@ func (p *postServiceProcessorGetSchoolRecentPosts) Process(ctx context.Context, 
 	return true, err
 }
 
-type postServiceProcessorGetAllPersonalPosts struct {
+type postServiceProcessorGetPersonalRecentPosts struct {
 	handler PostService
 }
 
-func (p *postServiceProcessorGetAllPersonalPosts) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
-	args := PostServiceGetAllPersonalPostsArgs{}
+func (p *postServiceProcessorGetPersonalRecentPosts) Process(ctx context.Context, seqId int32, iprot, oprot thrift.TProtocol) (success bool, err thrift.TException) {
+	args := PostServiceGetPersonalRecentPostsArgs{}
 	if err = args.Read(iprot); err != nil {
 		iprot.ReadMessageEnd()
 		x := thrift.NewTApplicationException(thrift.PROTOCOL_ERROR, err.Error())
-		oprot.WriteMessageBegin("GetAllPersonalPosts", thrift.EXCEPTION, seqId)
+		oprot.WriteMessageBegin("GetPersonalRecentPosts", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush(ctx)
@@ -2742,11 +2742,11 @@ func (p *postServiceProcessorGetAllPersonalPosts) Process(ctx context.Context, s
 
 	iprot.ReadMessageEnd()
 	var err2 error
-	result := PostServiceGetAllPersonalPostsResult{}
-	var retval *post.GetAllPersonalPostsResp
-	if retval, err2 = p.handler.GetAllPersonalPosts(ctx, args.Request); err2 != nil {
-		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetAllPersonalPosts: "+err2.Error())
-		oprot.WriteMessageBegin("GetAllPersonalPosts", thrift.EXCEPTION, seqId)
+	result := PostServiceGetPersonalRecentPostsResult{}
+	var retval *post.GetPersonalRecentPostsReq
+	if retval, err2 = p.handler.GetPersonalRecentPosts(ctx, args.Request); err2 != nil {
+		x := thrift.NewTApplicationException(thrift.INTERNAL_ERROR, "Internal error processing GetPersonalRecentPosts: "+err2.Error())
+		oprot.WriteMessageBegin("GetPersonalRecentPosts", thrift.EXCEPTION, seqId)
 		x.Write(oprot)
 		oprot.WriteMessageEnd()
 		oprot.Flush(ctx)
@@ -2754,7 +2754,7 @@ func (p *postServiceProcessorGetAllPersonalPosts) Process(ctx context.Context, s
 	} else {
 		result.Success = retval
 	}
-	if err2 = oprot.WriteMessageBegin("GetAllPersonalPosts", thrift.REPLY, seqId); err2 != nil {
+	if err2 = oprot.WriteMessageBegin("GetPersonalRecentPosts", thrift.REPLY, seqId); err2 != nil {
 		err = err2
 	}
 	if err2 = result.Write(oprot); err == nil && err2 != nil {
@@ -4242,35 +4242,35 @@ func (p *PostServiceGetSchoolRecentPostsResult) String() string {
 
 }
 
-type PostServiceGetAllPersonalPostsArgs struct {
-	Request *post.GetAllPersonalPostsReq `thrift:"request,1"`
+type PostServiceGetPersonalRecentPostsArgs struct {
+	Request *post.GetPersonalRecentPostsResp `thrift:"request,1"`
 }
 
-func NewPostServiceGetAllPersonalPostsArgs() *PostServiceGetAllPersonalPostsArgs {
-	return &PostServiceGetAllPersonalPostsArgs{}
+func NewPostServiceGetPersonalRecentPostsArgs() *PostServiceGetPersonalRecentPostsArgs {
+	return &PostServiceGetPersonalRecentPostsArgs{}
 }
 
-func (p *PostServiceGetAllPersonalPostsArgs) InitDefault() {
+func (p *PostServiceGetPersonalRecentPostsArgs) InitDefault() {
 }
 
-var PostServiceGetAllPersonalPostsArgs_Request_DEFAULT *post.GetAllPersonalPostsReq
+var PostServiceGetPersonalRecentPostsArgs_Request_DEFAULT *post.GetPersonalRecentPostsResp
 
-func (p *PostServiceGetAllPersonalPostsArgs) GetRequest() (v *post.GetAllPersonalPostsReq) {
+func (p *PostServiceGetPersonalRecentPostsArgs) GetRequest() (v *post.GetPersonalRecentPostsResp) {
 	if !p.IsSetRequest() {
-		return PostServiceGetAllPersonalPostsArgs_Request_DEFAULT
+		return PostServiceGetPersonalRecentPostsArgs_Request_DEFAULT
 	}
 	return p.Request
 }
 
-var fieldIDToName_PostServiceGetAllPersonalPostsArgs = map[int16]string{
+var fieldIDToName_PostServiceGetPersonalRecentPostsArgs = map[int16]string{
 	1: "request",
 }
 
-func (p *PostServiceGetAllPersonalPostsArgs) IsSetRequest() bool {
+func (p *PostServiceGetPersonalRecentPostsArgs) IsSetRequest() bool {
 	return p.Request != nil
 }
 
-func (p *PostServiceGetAllPersonalPostsArgs) Read(iprot thrift.TProtocol) (err error) {
+func (p *PostServiceGetPersonalRecentPostsArgs) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -4316,7 +4316,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_PostServiceGetAllPersonalPostsArgs[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_PostServiceGetPersonalRecentPostsArgs[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -4326,8 +4326,8 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *PostServiceGetAllPersonalPostsArgs) ReadField1(iprot thrift.TProtocol) error {
-	_field := post.NewGetAllPersonalPostsReq()
+func (p *PostServiceGetPersonalRecentPostsArgs) ReadField1(iprot thrift.TProtocol) error {
+	_field := post.NewGetPersonalRecentPostsResp()
 	if err := _field.Read(iprot); err != nil {
 		return err
 	}
@@ -4335,9 +4335,9 @@ func (p *PostServiceGetAllPersonalPostsArgs) ReadField1(iprot thrift.TProtocol) 
 	return nil
 }
 
-func (p *PostServiceGetAllPersonalPostsArgs) Write(oprot thrift.TProtocol) (err error) {
+func (p *PostServiceGetPersonalRecentPostsArgs) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetAllPersonalPosts_args"); err != nil {
+	if err = oprot.WriteStructBegin("GetPersonalRecentPosts_args"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -4363,7 +4363,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *PostServiceGetAllPersonalPostsArgs) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *PostServiceGetPersonalRecentPostsArgs) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("request", thrift.STRUCT, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -4380,43 +4380,43 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *PostServiceGetAllPersonalPostsArgs) String() string {
+func (p *PostServiceGetPersonalRecentPostsArgs) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("PostServiceGetAllPersonalPostsArgs(%+v)", *p)
+	return fmt.Sprintf("PostServiceGetPersonalRecentPostsArgs(%+v)", *p)
 
 }
 
-type PostServiceGetAllPersonalPostsResult struct {
-	Success *post.GetAllPersonalPostsResp `thrift:"success,0,optional"`
+type PostServiceGetPersonalRecentPostsResult struct {
+	Success *post.GetPersonalRecentPostsReq `thrift:"success,0,optional"`
 }
 
-func NewPostServiceGetAllPersonalPostsResult() *PostServiceGetAllPersonalPostsResult {
-	return &PostServiceGetAllPersonalPostsResult{}
+func NewPostServiceGetPersonalRecentPostsResult() *PostServiceGetPersonalRecentPostsResult {
+	return &PostServiceGetPersonalRecentPostsResult{}
 }
 
-func (p *PostServiceGetAllPersonalPostsResult) InitDefault() {
+func (p *PostServiceGetPersonalRecentPostsResult) InitDefault() {
 }
 
-var PostServiceGetAllPersonalPostsResult_Success_DEFAULT *post.GetAllPersonalPostsResp
+var PostServiceGetPersonalRecentPostsResult_Success_DEFAULT *post.GetPersonalRecentPostsReq
 
-func (p *PostServiceGetAllPersonalPostsResult) GetSuccess() (v *post.GetAllPersonalPostsResp) {
+func (p *PostServiceGetPersonalRecentPostsResult) GetSuccess() (v *post.GetPersonalRecentPostsReq) {
 	if !p.IsSetSuccess() {
-		return PostServiceGetAllPersonalPostsResult_Success_DEFAULT
+		return PostServiceGetPersonalRecentPostsResult_Success_DEFAULT
 	}
 	return p.Success
 }
 
-var fieldIDToName_PostServiceGetAllPersonalPostsResult = map[int16]string{
+var fieldIDToName_PostServiceGetPersonalRecentPostsResult = map[int16]string{
 	0: "success",
 }
 
-func (p *PostServiceGetAllPersonalPostsResult) IsSetSuccess() bool {
+func (p *PostServiceGetPersonalRecentPostsResult) IsSetSuccess() bool {
 	return p.Success != nil
 }
 
-func (p *PostServiceGetAllPersonalPostsResult) Read(iprot thrift.TProtocol) (err error) {
+func (p *PostServiceGetPersonalRecentPostsResult) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -4462,7 +4462,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_PostServiceGetAllPersonalPostsResult[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_PostServiceGetPersonalRecentPostsResult[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -4472,8 +4472,8 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *PostServiceGetAllPersonalPostsResult) ReadField0(iprot thrift.TProtocol) error {
-	_field := post.NewGetAllPersonalPostsResp()
+func (p *PostServiceGetPersonalRecentPostsResult) ReadField0(iprot thrift.TProtocol) error {
+	_field := post.NewGetPersonalRecentPostsReq()
 	if err := _field.Read(iprot); err != nil {
 		return err
 	}
@@ -4481,9 +4481,9 @@ func (p *PostServiceGetAllPersonalPostsResult) ReadField0(iprot thrift.TProtocol
 	return nil
 }
 
-func (p *PostServiceGetAllPersonalPostsResult) Write(oprot thrift.TProtocol) (err error) {
+func (p *PostServiceGetPersonalRecentPostsResult) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetAllPersonalPosts_result"); err != nil {
+	if err = oprot.WriteStructBegin("GetPersonalRecentPosts_result"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -4509,7 +4509,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *PostServiceGetAllPersonalPostsResult) writeField0(oprot thrift.TProtocol) (err error) {
+func (p *PostServiceGetPersonalRecentPostsResult) writeField0(oprot thrift.TProtocol) (err error) {
 	if p.IsSetSuccess() {
 		if err = oprot.WriteFieldBegin("success", thrift.STRUCT, 0); err != nil {
 			goto WriteFieldBeginError
@@ -4528,10 +4528,10 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 0 end error: ", p), err)
 }
 
-func (p *PostServiceGetAllPersonalPostsResult) String() string {
+func (p *PostServiceGetPersonalRecentPostsResult) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("PostServiceGetAllPersonalPostsResult(%+v)", *p)
+	return fmt.Sprintf("PostServiceGetPersonalRecentPostsResult(%+v)", *p)
 
 }

@@ -30,9 +30,9 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusBadRequest, post.GetPostByIDResp{
 			IsSuccessful: false,
 			ErrorMessage: "ID cannot be null",
-			Post: nil,
+			Post:         nil,
 		})
-		return 
+		return
 	}
 
 	domainPost, err := post_service.GetPostByID(ctx, req.ID)
@@ -40,17 +40,16 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		c.JSON(consts.StatusBadRequest, post.GetPostByIDResp{
 			IsSuccessful: false,
 			ErrorMessage: err.Error(),
-			Post: nil,
+			Post:         nil,
 		})
 		return
 	}
 	thriftPost := domain.FromDomainPostToThriftPost(*domainPost)
 
-
 	c.JSON(consts.StatusOK, post.GetPostByIDResp{
-			IsSuccessful: true,
-			ErrorMessage: "",
-			Post: &thriftPost,
+		IsSuccessful: true,
+		ErrorMessage: "",
+		Post:         &thriftPost,
 	})
 }
 
@@ -94,9 +93,8 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, post.CreatePostResp{
 		IsSuccessful: true,
 		ErrorMessage: "",
-		Post: &thriftPost,
+		Post:         &thriftPost,
 	})
-
 
 }
 
@@ -148,17 +146,47 @@ func GetSchoolRecentPosts(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, resp)
 }
 
-// GetAllPersonalPosts .
+
+// GetPersonalRecentPosts .
 // @router /post/personal [GET]
-func GetAllPersonalPosts(ctx context.Context, c *app.RequestContext) {
-	var err error
-	var req post.GetAllPersonalPostsReq
-	err = c.BindAndValidate(&req)
+// GetPersonalRecentPosts
+// @router /post/personal [GET]
+func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
+	var req post.GetPersonalRecentPostsReq
+
+	if err := c.BindAndValidate(&req); err != nil {
+		c.JSON(consts.StatusBadRequest, post.GetPersonalRecentPostsResp{
+			IsSuccessful: false,
+			ErrorMessage: "Invalid request: " + err.Error(),
+			Posts:        nil,
+		})
+		return
+	}
+	
+	posts, err := post_service.GetPersonalRecentPosts(ctx, req.UserID, req.Before, int(req.Limit))
 	if err != nil {
-		c.String(consts.StatusBadRequest, err.Error())
+		c.JSON(consts.StatusOK, post.GetPersonalRecentPostsResp{
+			IsSuccessful: false,
+			ErrorMessage: "Failed to fetch posts: " + err.Error(),
+			Posts:        nil,
+		})
 		return
 	}
 
-	resp := new(post.GetAllPersonalPostsResp)
+	// 3️⃣ convert to []thrift.Post
+	thriftPosts := domain.FromDomainPostListToThriftPostList(posts)
+	var thriftPostPointers []*post.Post
+	for _, thriftPost := range thriftPosts {
+		thriftPostPointers = append(thriftPostPointers, &thriftPost)
+	}
+
+
+	resp := post.GetPersonalRecentPostsResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		Posts:        thriftPostPointers,
+	}
+
+
 	c.JSON(consts.StatusOK, resp)
 }

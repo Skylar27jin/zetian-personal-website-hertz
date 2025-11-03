@@ -2,6 +2,7 @@ package post_service
 
 import (
 	"context"
+	"fmt"
 	"time"
 
 	"zetian-personal-website-hertz/biz/domain"
@@ -83,21 +84,29 @@ func GetSchoolRecentPosts(ctx context.Context, schoolID int64, beforeStr string,
 	return post_repo.ListPostsBySchoolIDBefore(ctx, schoolID, before, limit)
 }
 
-// ----------------------------------------------------
+
 // GetAllPersonalPosts
-// ----------------------------------------------------
-func GetAllPersonalPosts(ctx context.Context, userID int64, beforeStr string, limit int) ([]domain.Post, error) {
+
+func GetPersonalRecentPosts(ctx context.Context, userID int64, beforeStr string, limit int) ([]domain.Post, error) {
 	var before time.Time
 	var err error
 
+	// parse time
 	if beforeStr == "" {
 		before = time.Now()
 	} else {
-		before, err = time.Parse(time.RFC3339, beforeStr)
+		// parse time string as time.Time
+		before, err = time.Parse(time.RFC3339Nano, beforeStr)
 		if err != nil {
-			return nil, err
+			return nil, fmt.Errorf("invalid time format for 'before': %v", err)
 		}
 	}
 
-	return post_repo.ListPostsByUserIDBefore(ctx, userID, before, limit)
+	// get everything from db
+	posts, err := post_repo.ListPostsByUserIDBefore(ctx, userID, before, limit)
+	if err != nil {
+		return nil, fmt.Errorf("failed to list posts: %v", err)
+	}
+
+	return posts, nil
 }

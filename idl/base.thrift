@@ -37,5 +37,5 @@ service PostService {
 
     post.GetSchoolRecentPostsResp GetSchoolRecentPosts(1: post.GetSchoolRecentPostsReq request) (api.get="/post/school/recent")
 
-    post.GetAllPersonalPostsResp GetAllPersonalPosts(1: post.GetAllPersonalPostsReq request) (api.get="/post/personal")
+    post.GetPersonalRecentPostsReq GetPersonalRecentPosts(1: post.GetPersonalRecentPostsResp request) (api.get="/post/personal")
 }

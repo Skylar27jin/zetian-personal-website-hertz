@@ -27,7 +27,7 @@ func Register(r *server.Hertz) {
 		_post.POST("/delete", append(_deletepostMw(), base.DeletePost)...)
 		_post.POST("/edit", append(_editpostMw(), base.EditPost)...)
 		_post.GET("/get", append(_getpostbyidMw(), base.GetPostByID)...)
-		_post.GET("/personal", append(_getallpersonalpostsMw(), base.GetAllPersonalPosts)...)
+		_post.GET("/personal", append(_getpersonalrecentpostsMw(), base.GetPersonalRecentPosts)...)
 		{
 			_school := _post.Group("/school", _schoolMw()...)
 			_school.GET("/recent", append(_getschoolrecentpostsMw(), base.GetSchoolRecentPosts)...)

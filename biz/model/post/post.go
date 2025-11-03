@@ -563,7 +563,6 @@ func (p *Post) String() string {
 
 // get--------------------------------------------------------------
 type GetPostByIDReq struct {
-	// 帖子ID
 	ID int64 `thrift:"id,1" form:"id" json:"id" query:"id"`
 }
 
@@ -2278,6 +2277,7 @@ func (p *DeletePostResp) String() string {
 
 }
 
+// get -----------------------------------------------------
 type GetSchoolRecentPostsReq struct {
 	SchoolID int64  `thrift:"school_id,1" form:"school_id" json:"school_id" query:"school_id"`
 	Before   string `thrift:"before,2" form:"before" json:"before" query:"before"`
@@ -2809,38 +2809,38 @@ func (p *GetSchoolRecentPostsResp) String() string {
 
 }
 
-type GetAllPersonalPostsReq struct {
+type GetPersonalRecentPostsReq struct {
 	UserID int64  `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
 	Before string `thrift:"before,2" form:"before" json:"before" query:"before"`
 	Limit  int32  `thrift:"limit,3" form:"limit" json:"limit" query:"limit"`
 }
 
-func NewGetAllPersonalPostsReq() *GetAllPersonalPostsReq {
-	return &GetAllPersonalPostsReq{}
+func NewGetPersonalRecentPostsReq() *GetPersonalRecentPostsReq {
+	return &GetPersonalRecentPostsReq{}
 }
 
-func (p *GetAllPersonalPostsReq) InitDefault() {
+func (p *GetPersonalRecentPostsReq) InitDefault() {
 }
 
-func (p *GetAllPersonalPostsReq) GetUserID() (v int64) {
+func (p *GetPersonalRecentPostsReq) GetUserID() (v int64) {
 	return p.UserID
 }
 
-func (p *GetAllPersonalPostsReq) GetBefore() (v string) {
+func (p *GetPersonalRecentPostsReq) GetBefore() (v string) {
 	return p.Before
 }
 
-func (p *GetAllPersonalPostsReq) GetLimit() (v int32) {
+func (p *GetPersonalRecentPostsReq) GetLimit() (v int32) {
 	return p.Limit
 }
 
-var fieldIDToName_GetAllPersonalPostsReq = map[int16]string{
+var fieldIDToName_GetPersonalRecentPostsReq = map[int16]string{
 	1: "user_id",
 	2: "before",
 	3: "limit",
 }
 
-func (p *GetAllPersonalPostsReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsReq) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -2902,7 +2902,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetAllPersonalPostsReq[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetPersonalRecentPostsReq[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -2912,7 +2912,7 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *GetPersonalRecentPostsReq) ReadField1(iprot thrift.TProtocol) error {
 
 	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -2923,7 +2923,7 @@ func (p *GetAllPersonalPostsReq) ReadField1(iprot thrift.TProtocol) error {
 	p.UserID = _field
 	return nil
 }
-func (p *GetAllPersonalPostsReq) ReadField2(iprot thrift.TProtocol) error {
+func (p *GetPersonalRecentPostsReq) ReadField2(iprot thrift.TProtocol) error {
 
 	var _field string
 	if v, err := iprot.ReadString(); err != nil {
@@ -2934,7 +2934,7 @@ func (p *GetAllPersonalPostsReq) ReadField2(iprot thrift.TProtocol) error {
 	p.Before = _field
 	return nil
 }
-func (p *GetAllPersonalPostsReq) ReadField3(iprot thrift.TProtocol) error {
+func (p *GetPersonalRecentPostsReq) ReadField3(iprot thrift.TProtocol) error {
 
 	var _field int32
 	if v, err := iprot.ReadI32(); err != nil {
@@ -2946,9 +2946,9 @@ func (p *GetAllPersonalPostsReq) ReadField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *GetAllPersonalPostsReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsReq) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetAllPersonalPostsReq"); err != nil {
+	if err = oprot.WriteStructBegin("GetPersonalRecentPostsReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -2982,7 +2982,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsReq) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsReq) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -2999,7 +2999,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsReq) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsReq) writeField2(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("before", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -3016,7 +3016,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsReq) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsReq) writeField3(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("limit", thrift.I32, 3); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -3033,46 +3033,46 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsReq) String() string {
+func (p *GetPersonalRecentPostsReq) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("GetAllPersonalPostsReq(%+v)", *p)
+	return fmt.Sprintf("GetPersonalRecentPostsReq(%+v)", *p)
 
 }
 
-type GetAllPersonalPostsResp struct {
+type GetPersonalRecentPostsResp struct {
 	IsSuccessful bool    `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
 	ErrorMessage string  `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
 	Posts        []*Post `thrift:"posts,3,default,list<Post>" form:"posts" json:"posts" query:"posts"`
 }
 
-func NewGetAllPersonalPostsResp() *GetAllPersonalPostsResp {
-	return &GetAllPersonalPostsResp{}
+func NewGetPersonalRecentPostsResp() *GetPersonalRecentPostsResp {
+	return &GetPersonalRecentPostsResp{}
 }
 
-func (p *GetAllPersonalPostsResp) InitDefault() {
+func (p *GetPersonalRecentPostsResp) InitDefault() {
 }
 
-func (p *GetAllPersonalPostsResp) GetIsSuccessful() (v bool) {
+func (p *GetPersonalRecentPostsResp) GetIsSuccessful() (v bool) {
 	return p.IsSuccessful
 }
 
-func (p *GetAllPersonalPostsResp) GetErrorMessage() (v string) {
+func (p *GetPersonalRecentPostsResp) GetErrorMessage() (v string) {
 	return p.ErrorMessage
 }
 
-func (p *GetAllPersonalPostsResp) GetPosts() (v []*Post) {
+func (p *GetPersonalRecentPostsResp) GetPosts() (v []*Post) {
 	return p.Posts
 }
 
-var fieldIDToName_GetAllPersonalPostsResp = map[int16]string{
+var fieldIDToName_GetPersonalRecentPostsResp = map[int16]string{
 	1: "isSuccessful",
 	2: "errorMessage",
 	3: "posts",
 }
 
-func (p *GetAllPersonalPostsResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsResp) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -3134,7 +3134,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetAllPersonalPostsResp[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetPersonalRecentPostsResp[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -3144,7 +3144,7 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *GetPersonalRecentPostsResp) ReadField1(iprot thrift.TProtocol) error {
 
 	var _field bool
 	if v, err := iprot.ReadBool(); err != nil {
@@ -3155,7 +3155,7 @@ func (p *GetAllPersonalPostsResp) ReadField1(iprot thrift.TProtocol) error {
 	p.IsSuccessful = _field
 	return nil
 }
-func (p *GetAllPersonalPostsResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *GetPersonalRecentPostsResp) ReadField2(iprot thrift.TProtocol) error {
 
 	var _field string
 	if v, err := iprot.ReadString(); err != nil {
@@ -3166,7 +3166,7 @@ func (p *GetAllPersonalPostsResp) ReadField2(iprot thrift.TProtocol) error {
 	p.ErrorMessage = _field
 	return nil
 }
-func (p *GetAllPersonalPostsResp) ReadField3(iprot thrift.TProtocol) error {
+func (p *GetPersonalRecentPostsResp) ReadField3(iprot thrift.TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return err
@@ -3190,9 +3190,9 @@ func (p *GetAllPersonalPostsResp) ReadField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *GetAllPersonalPostsResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsResp) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("GetAllPersonalPostsResp"); err != nil {
+	if err = oprot.WriteStructBegin("GetPersonalRecentPostsResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -3226,7 +3226,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsResp) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsResp) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("isSuccessful", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -3243,7 +3243,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsResp) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsResp) writeField2(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("errorMessage", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -3260,7 +3260,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsResp) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *GetPersonalRecentPostsResp) writeField3(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("posts", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -3285,10 +3285,10 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *GetAllPersonalPostsResp) String() string {
+func (p *GetPersonalRecentPostsResp) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("GetAllPersonalPostsResp(%+v)", *p)
+	return fmt.Sprintf("GetPersonalRecentPostsResp(%+v)", *p)
 
 }

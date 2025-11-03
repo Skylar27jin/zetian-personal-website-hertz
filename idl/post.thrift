@@ -60,7 +60,7 @@ struct DeletePostResp {
     2: string errorMessage;
 }
 
-
+//get -----------------------------------------------------
 struct GetSchoolRecentPostsReq {
     1: i64 school_id;
     2: string before;
@@ -74,13 +74,13 @@ struct GetSchoolRecentPostsResp {
     4: string oldestTime; //min(posts.created_at), so that frontend is able to eaisly search for the next group of posts
 }
 
-struct GetAllPersonalPostsReq {
+struct GetPersonalRecentPostsReq {
     1: i64 user_id;
     2: string before;
     3: i32 limit;
 }
 
-struct GetAllPersonalPostsResp {
+struct GetPersonalRecentPostsResp {
     1: bool isSuccessful;
     2: string errorMessage;
     3: list<Post> posts;

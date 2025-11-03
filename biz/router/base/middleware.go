@@ -90,3 +90,8 @@ func _getschoolrecentpostsMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _getpersonalrecentpostsMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
