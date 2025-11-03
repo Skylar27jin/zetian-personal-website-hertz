@@ -140,12 +140,14 @@ func Me(ctx context.Context, c *app.RequestContext) {
 			IsSuccessful: false,
 			ErrorMessage: err.Error() + ": invalid JWT",
 		})
+		return
 	}
 	if exp < time.Now().Unix() {
 		c.JSON(consts.StatusUnauthorized, verification.MeResp{
 			IsSuccessful: false,
 			ErrorMessage: "Authentification info expired, please login again",
 		})
+		return
 	}
 
 	c.JSON(consts.StatusOK, verification.MeResp{

@@ -4,10 +4,13 @@ package base
 
 import (
 	"context"
+	"time"
 
-	post "zetian-personal-website-hertz/biz/model/post"
-	"zetian-personal-website-hertz/biz/service/post_service"
 	"zetian-personal-website-hertz/biz/domain"
+	post "zetian-personal-website-hertz/biz/model/post"
+	"zetian-personal-website-hertz/biz/service/auth_service"
+	"zetian-personal-website-hertz/biz/service/post_service"
+
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
 )
@@ -61,9 +64,40 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
-	resp := new(post.CreatePostResp)
+	JWT := string(c.Cookie("JWT"))
+	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
+	if err != nil || int64(id) != req.GetUserID() {
+		c.JSON(consts.StatusUnauthorized, post.CreatePostResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error() + ": Please Create Post using your own account",
+		})
+		return
+	}
+	if exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, post.CreatePostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Authentification info expired, please login again",
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	domain_post_instance, err := post_service.CreatePost(ctx, req.GetUserID(), req.GetSchoolID(), req.GetTitle(), req.GetContent())
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, post.CreatePostResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+	thriftPost := domain.FromDomainPostToThriftPost(*domain_post_instance)
+
+	c.JSON(consts.StatusOK, post.CreatePostResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		Post: &thriftPost,
+	})
+
+
 }
 
 // EditPost .
@@ -126,6 +160,5 @@ func GetAllPersonalPosts(ctx context.Context, c *app.RequestContext) {
 	}
 
 	resp := new(post.GetAllPersonalPostsResp)
-
 	c.JSON(consts.StatusOK, resp)
 }

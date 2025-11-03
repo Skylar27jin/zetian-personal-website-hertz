@@ -15,7 +15,7 @@ struct Post {
 
 //get--------------------------------------------------------------
 struct GetPostByIDReq {
-    1: i64 id; // 帖子ID
+    1: i64 id;
 }
 
 struct GetPostByIDResp {
