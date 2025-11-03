@@ -3,6 +3,7 @@ namespace go base
 include "user.thrift"
 include "numberOperation.thrift"
 include "verification.thrift"
+include "post.thrift"
 
 service UserService {
     user.LoginResp Login(1: user.LoginReq request) (api.post="/login");
@@ -22,4 +23,19 @@ service VerificationService {
 
     verification.MeResp Me(1: verification.MeReq request) (api.get="/me")
     //1, get "JWT" from Cookie; 2, verify whether cookie is not expired and JWT is not expired; 3, if both are not expired, return id, name, and email
+}
+
+
+service PostService {
+    post.GetPostByIDResp GetPostByID(1: post.GetPostByIDReq request) (api.get="/post/get")
+
+    post.CreatePostResp CreatePost(1: post.CreatePostReq request) (api.post="/post/create")
+
+    post.EditPostResp EditPost(1: post.EditPostReq request) (api.post="/post/edit")
+
+    post.DeletePostResp DeletePost(1: post.DeletePostReq request) (api.post="/post/delete")
+
+    post.GetSchoolRecentPostsResp GetSchoolRecentPosts(1: post.GetSchoolRecentPostsReq request) (api.get="/post/school/recent")
+
+    post.GetAllPersonalPostsResp GetAllPersonalPosts(1: post.GetAllPersonalPostsReq request) (api.get="/post/personal")
 }

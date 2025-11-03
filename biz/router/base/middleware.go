@@ -50,3 +50,43 @@ func _meMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _postMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _createpostMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _deletepostMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _editpostMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getpostbyidMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getallpersonalpostsMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _schoolMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getschoolrecentpostsMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
