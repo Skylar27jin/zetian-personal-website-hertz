@@ -5,9 +5,11 @@ package base
 import (
 	"context"
 
+	post "zetian-personal-website-hertz/biz/model/post"
+	"zetian-personal-website-hertz/biz/service/post_service"
+	"zetian-personal-website-hertz/biz/domain"
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
-	post "zetian-personal-website-hertz/biz/model/post"
 )
 
 // GetPostByID .
@@ -21,11 +23,32 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(post.GetPostByIDResp)
+	if req.ID == 0 {
+		c.JSON(consts.StatusBadRequest, post.GetPostByIDResp{
+			IsSuccessful: false,
+			ErrorMessage: "ID cannot be null",
+			Post: nil,
+		})
+		return 
+	}
 
-	
+	domainPost, err := post_service.GetPostByID(ctx, req.ID)
+	if err != nil {
+		c.JSON(consts.StatusBadRequest, post.GetPostByIDResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+			Post: nil,
+		})
+		return
+	}
+	thriftPost := domain.FromDomainPostToThriftPost(*domainPost)
 
-	c.JSON(consts.StatusOK, resp)
+
+	c.JSON(consts.StatusOK, post.GetPostByIDResp{
+			IsSuccessful: true,
+			ErrorMessage: "",
+			Post: &thriftPost,
+	})
 }
 
 // CreatePost .
@@ -38,7 +61,6 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
-
 	resp := new(post.CreatePostResp)
 
 	c.JSON(consts.StatusOK, resp)
