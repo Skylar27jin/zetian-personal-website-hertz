@@ -6,7 +6,7 @@ import (
 	"time"
 
 	"zetian-personal-website-hertz/biz/domain"
-	post_favorite_repo "zetian-personal-website-hertz/biz/repository/post_fav_repo.go"
+	"zetian-personal-website-hertz/biz/repository/post_fav_repo"
 	"zetian-personal-website-hertz/biz/repository/post_like_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo"
 )
