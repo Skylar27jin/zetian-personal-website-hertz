@@ -1,4 +1,4 @@
-package post_favorite_repo
+package post_fav_repo
 
 import (
 	"context"

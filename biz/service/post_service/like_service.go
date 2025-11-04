@@ -23,7 +23,7 @@ func FavoritePost(ctx context.Context, userID, postID int64) error {
 	}
 
 	// 2) favorite
-	if err := post_favorite_repo.FavoritePost(ctx, userID, postID); err != nil {
+	if err := post_fav_repo.FavoritePost(ctx, userID, postID); err != nil {
 		return fmt.Errorf("failed to favorite post: %w", err)
 	}
 	return nil
@@ -39,7 +39,7 @@ func UnfavoritePost(ctx context.Context, userID, postID int64) error {
 	}
 
 	// 2) unfavorite
-	if err := post_favorite_repo.UnfavoritePost(ctx, userID, postID); err != nil {
+	if err := post_fav_repo.UnfavoritePost(ctx, userID, postID); err != nil {
 		return fmt.Errorf("failed to unfavorite post: %w", err)
 	}
 	return nil

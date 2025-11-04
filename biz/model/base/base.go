@@ -178,6 +178,7 @@ type PostService interface {
 
 	GetPersonalRecentPosts(ctx context.Context, request *post.GetPersonalRecentPostsResp) (r *post.GetPersonalRecentPostsReq, err error)
 	//like, unlike, fav, unfav will authorize user based on the JWT
+	//user_id likes post_id, but will check whether user_id == JWT
 	LikePost(ctx context.Context, request *post.UserFlagPostResq) (r *post.LikePostReq, err error)
 
 	UnlikePost(ctx context.Context, request *post.UserFlagPostResq) (r *post.UnlikePostReq, err error)

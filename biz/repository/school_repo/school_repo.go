@@ -2,42 +2,51 @@ package school_repo
 
 import (
 	"context"
+
 	"zetian-personal-website-hertz/biz/domain"
 	DB "zetian-personal-website-hertz/biz/repository"
 )
 
-// CreateSchool 创建学校
-func CreateSchool(ctx context.Context, school *domain.School) error {
-	return DB.DB.WithContext(ctx).Create(school).Error
-}
-
-// GetSchoolByID 按ID查询学校
+// 按 id 查一条学校记录
 func GetSchoolByID(ctx context.Context, id int64) (*domain.School, error) {
-	var school domain.School
-	err := DB.DB.WithContext(ctx).Where("id = ?", id).First(&school).Error
-	if err != nil {
+	var s domain.School
+	if err := DB.DB.WithContext(ctx).
+		Where("id = ?", id).
+		First(&s).Error; err != nil {
 		return nil, err
 	}
-	return &school, nil
+	return &s, nil
 }
 
-// GetSchoolByShortName 按简称（如BU）查询
-func GetSchoolByShortName(ctx context.Context, shortName string) (*domain.School, error) {
-	var school domain.School
-	err := DB.DB.WithContext(ctx).Where("short_name = ?", shortName).First(&school).Error
-	if err != nil {
-		return nil, err
+// 按 id 只取 name（如果你只想拿全名）
+func GetSchoolNameByID(ctx context.Context, id int64) (string, error) {
+	var s domain.School
+	if err := DB.DB.WithContext(ctx).
+		Select("id, name").
+		Where("id = ?", id).
+		First(&s).Error; err != nil {
+		return "", err
 	}
-	return &school, nil
+	return s.Name, nil
 }
 
-// ListAllSchools 获取所有学校
-func ListAllSchools(ctx context.Context) ([]domain.School, error) {
+// 批量按 id 查学校，用于列表接口
+func GetSchoolsByIDs(ctx context.Context, ids []int64) (map[int64]*domain.School, error) {
+	if len(ids) == 0 {
+		return map[int64]*domain.School{}, nil
+	}
+
 	var schools []domain.School
-	err := DB.DB.WithContext(ctx).Find(&schools).Error
-	return schools, err
-}
+	if err := DB.DB.WithContext(ctx).
+		Where("id IN ?", ids).
+		Find(&schools).Error; err != nil {
+		return nil, err
+	}
 
-func GetTableName() string {
-	return "schools"
+	res := make(map[int64]*domain.School, len(schools))
+	for i := range schools {
+		s := schools[i]
+		res[s.ID] = &s
+	}
+	return res, nil
 }

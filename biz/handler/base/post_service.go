@@ -44,7 +44,7 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 	// 对应 service 中 IsLikedByUser / IsFavByUser 会默认 false。
 
 	// 2) get post with like/fav counts and user flags
-	domainPostFull, err := post_service.GetPostwLikeFavAndUserFlags(ctx, req.ID, viewerID)
+	domainPostFull, err := post_service.GetPostWithStats(ctx, req.ID, viewerID)
 	if err != nil {
 		c.JSON(consts.StatusBadRequest, post.GetPostByIDResp{
 			IsSuccessful: false,
@@ -54,8 +54,8 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 3) convert to thrift.Post
-	thriftPost := domain.FromDomainPostwLikeFavAndUserToThriftPost(*domainPostFull)
+	// 转 thrift.Post
+	thriftPost := domain.FromDomainPostWithStatsToThriftPost(*domainPostFull)
 
 	c.JSON(consts.StatusOK, post.GetPostByIDResp{
 		IsSuccessful: true,
@@ -170,15 +170,22 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	//get viewer from JWT
+
+	// get viewer from JWT
 	viewerID := int64(-1)
-	JWT := string(c.Cookie("JWT"))
-	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, jwtStr)
 	if err == nil && exp > time.Now().Unix() {
 		viewerID = int64(id)
 	}
 
-	posts, err := post_service.GetPersonalRecentPostsWithLikeFavAndUserFlags(ctx, req.UserID, viewerID, req.Before, int(req.Limit))
+	postsWithStats, err := post_service.GetPersonalRecentPostsWithStats(
+		ctx,
+		req.UserID,
+		viewerID,
+		req.Before,
+		int(req.Limit),
+	)
 	if err != nil {
 		c.JSON(consts.StatusOK, post.GetPersonalRecentPostsResp{
 			IsSuccessful: false,
@@ -188,8 +195,8 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 3️⃣ convert to []thrift.Post
-	thriftPosts := domain.FromDomainPostwLikeFavAndUserListToThriftPostList(posts)
+	// convert []domain.PostWithStats -> []thrift.Post
+	thriftPosts := domain.FromPostWithStatsListToThriftPostList(postsWithStats)
 	thriftPostPointers := make([]*post.Post, len(thriftPosts))
 	for i := range thriftPosts {
 		thriftPostPointers[i] = &thriftPosts[i]
