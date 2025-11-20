@@ -128,6 +128,11 @@ func clearVeriEmailCookie(c *app.RequestContext) {
 		protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
 }
 
+func clearAuthCookie(c *app.RequestContext) {
+	c.SetCookie("JWT", "", -1, "/", config.GetSpecificConfig().Domain,
+		protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
+}
+
 // GetUser .
 // @router /user/get [GET]
 func GetUser(ctx context.Context, c *app.RequestContext) {
@@ -196,4 +201,23 @@ func GetUser(ctx context.Context, c *app.RequestContext) {
 		ID:           int64(domainUser.ID),
 	})
 
+}
+
+// Logout .
+// @router logout [POST]
+func Logout(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req user.LogoutReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+
+	clearAuthCookie(c)
+	c.JSON(consts.StatusOK, user.LogoutResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+	})
 }

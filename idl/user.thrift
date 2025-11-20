@@ -26,6 +26,18 @@ struct SignUpResp {
     4: string email;
 }
 
+
+
+struct LogoutReq {
+
+}
+
+struct LogoutResp {
+    1: bool isSuccessful;
+    2: string errorMessage;
+}
+
+
 //get user by ID or name
 //cannot pass both ID and name, at least one should be passed
 struct GetUserReq {
