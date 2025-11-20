@@ -141,7 +141,7 @@ func DeletePost(ctx context.Context, c *app.RequestContext) {
 
 	fmt.Println("Entered DeletePost", req.GetID())
 	JWT := string(c.Cookie("JWT"))
-	_, _, _, exp, user_id, err := auth_service.ParseUserJWT(ctx, JWT)
+	_, _, _, exp, userID, err := auth_service.ParseUserJWT(ctx, JWT)
 	if err != nil {
 		c.JSON(consts.StatusUnauthorized, post.DeletePostResp{
 			IsSuccessful: false,
@@ -157,7 +157,7 @@ func DeletePost(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	err = post_service.DeletePost(ctx, user_id, req.GetID())
+	err = post_service.DeletePost(ctx, userID, req.GetID())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
 		c.JSON(consts.StatusNotFound, post.DeletePostResp{
 			IsSuccessful: false,

@@ -34,24 +34,9 @@ func CreatePost(ctx context.Context, userID int64, schoolID int64, title string,
 }
 
 // EditPost
-func EditPost(ctx context.Context, id int64, title string, content string) (*domain.Post, error) {
-	post, err := post_repo.GetPostByID(ctx, id)
-	if err != nil {
-		return nil, err
-	}
+func EditPost(ctx context.Context, userID, postID int64, title string, content string) (*domain.Post, error) {
 
-	if title != "" {
-		post.Title = title
-	}
-	if content != "" {
-		post.Content = content
-	}
-	post.UpdatedAt = time.Now()
-
-	if err := post_repo.UpdatePost(ctx, post); err != nil {
-		return nil, err
-	}
-	return post, nil
+	return nil, nil
 }
 
 

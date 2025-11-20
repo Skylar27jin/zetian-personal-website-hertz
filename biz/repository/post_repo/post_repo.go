@@ -26,9 +26,17 @@ func GetPostByID(ctx context.Context, id int64) (*domain.Post, error) {
 }
 
 
-func UpdatePost(ctx context.Context, post *domain.Post) error {
-	return DB.DB.WithContext(ctx).Save(post).Error
+func UpdatePost(ctx context.Context, userID, postID int64, title, content string) error {
+	return DB.DB.WithContext(ctx).
+		Model(&domain.Post{}).
+		Where("id = ? AND user_id = ?", postID, userID).
+		Updates(map[string]any{
+			"title":   title,
+			"content": content,
+			//updated_at will be auto updated by gorm
+		}).Error
 }
+
 
 //take in user_id and post_id to ensure only the owner can delete the post
 func DeletePost(ctx context.Context, userID, postID int64) error {

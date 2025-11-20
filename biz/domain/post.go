@@ -13,8 +13,8 @@ type Post struct {
 	Title     string    `json:"title" gorm:"type:varchar(255)"`
 	Content   string    `json:"content" gorm:"type:text"`
 	ViewCount int       `json:"view_count"`
-	CreatedAt time.Time `json:"created_at"`
-	UpdatedAt time.Time `json:"updated_at"`
+	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
+	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
 // PostWithStats — Post + like/fav count + user interaction
