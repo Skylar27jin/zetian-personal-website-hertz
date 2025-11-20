@@ -186,7 +186,7 @@ func GetPersonalRecentPostsWithStats(
 	limit int,
 ) ([]domain.PostWithStats, error) {
 	posts, err := GetPersonalRecentPosts(ctx, userID, beforeStr, limit)
-	if err != nil {
+	if err != nil || len(posts) == 0 {
 		return nil, err
 	}
 	return buildPostWithStatsList(ctx, posts, viewerID)

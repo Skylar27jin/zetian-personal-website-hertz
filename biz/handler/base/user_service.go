@@ -127,3 +127,19 @@ func clearVeriEmailCookie(c *app.RequestContext) {
 	c.SetCookie("VeriEmailJWT", "", -1, "/", config.GetSpecificConfig().Domain,
 		protocol.CookieSameSiteLaxMode, config.GetSpecificConfig().CookieSecure, true)
 }
+
+// GetUser .
+// @router /user/get [GET]
+func GetUser(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req user.GetUserReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	resp := new(user.GetUserResp)
+
+	c.JSON(consts.StatusOK, resp)
+}

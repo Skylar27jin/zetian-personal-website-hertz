@@ -187,7 +187,7 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		int(req.Limit),
 	)
 	if err != nil {
-		c.JSON(consts.StatusOK, post.GetPersonalRecentPostsResp{
+		c.JSON(consts.StatusInternalServerError, post.GetPersonalRecentPostsResp{
 			IsSuccessful: false,
 			ErrorMessage: "Failed to fetch posts: " + err.Error(),
 			Posts:        nil,

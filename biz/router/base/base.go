@@ -38,6 +38,10 @@ func Register(r *server.Hertz) {
 		}
 	}
 	{
+		_user := root.Group("/user", _userMw()...)
+		_user.GET("/get", append(_getuserMw(), base.GetUser)...)
+	}
+	{
 		_verification := root.Group("/verification", _verificationMw()...)
 		{
 			_email := _verification.Group("/email", _emailMw()...)

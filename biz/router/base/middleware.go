@@ -115,3 +115,13 @@ func _unlikepostMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _userMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getuserMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

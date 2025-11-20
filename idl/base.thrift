@@ -8,6 +8,7 @@ include "post.thrift"
 service UserService {
     user.LoginResp Login(1: user.LoginReq request) (api.post="/login");
     user.SignUpResp SignUp(1: user.SignUpReq request) (api.post="/signup");
+    user.GetUserResp GetUser(1: user.GetUserReq request) (api.get="/user/get");
 }
 
 service NumberOperationService {

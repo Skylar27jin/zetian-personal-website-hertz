@@ -65,4 +65,14 @@ func Login(ctx context.Context, email, password string) (*domain.User, error) {
 }
 
 
+func GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
+	user, err := userRepo.GetUserByID(ctx, id)
+	if err != nil{
+		return nil, fmt.Errorf("db Error: %v", err.Error())
+	}
+
+	return user, nil
+}
+
+
 
