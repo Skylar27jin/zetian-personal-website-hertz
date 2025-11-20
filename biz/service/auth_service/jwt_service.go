@@ -57,7 +57,7 @@ func ParseUserJWT(ctx context.Context, tokenString string) (
 	email string,
 	iat int64,
 	exp int64,
-	id int,
+	id int64,
 	returnErr error) {
 
 	payload, err := jwt_pkg.ParseJWT(tokenString)
@@ -89,7 +89,7 @@ func ParseUserJWT(ctx context.Context, tokenString string) (
 		return "", "", -3, -3, -3, err
 	}
 
-	return usernameInterface.(string), emailInterface.(string), iat64, exp64, int(id_got), nil
+	return usernameInterface.(string), emailInterface.(string), iat64, exp64, id_got, nil
 
 }
 

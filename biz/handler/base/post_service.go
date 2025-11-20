@@ -4,6 +4,8 @@ package base
 
 import (
 	"context"
+	"errors"
+	"fmt"
 	"time"
 
 	"zetian-personal-website-hertz/biz/domain"
@@ -13,6 +15,7 @@ import (
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol/consts"
+	"gorm.io/gorm"
 )
 
 // GetPostByID .
@@ -38,7 +41,7 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 	JWT := string(c.Cookie("JWT"))
 	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
 	if err == nil && exp > time.Now().Unix() {
-		viewerID = int64(id)
+		viewerID = id
 	}
 	// 若 JWT 不存在 / 解析失败 / 过期，则 viewerID 保持 -1，
 	// 对应 service 中 IsLikedByUser / IsFavByUser 会默认 false。
@@ -76,7 +79,7 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 	}
 	JWT := string(c.Cookie("JWT"))
 	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
-	if err != nil || int64(id) != req.GetUserID() {
+	if err != nil || id != req.GetUserID() {
 		c.JSON(consts.StatusUnauthorized, post.CreatePostResp{
 			IsSuccessful: false,
 			ErrorMessage: err.Error() + ": Please Create Post using your own account",
@@ -136,9 +139,45 @@ func DeletePost(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(post.DeletePostResp)
+	fmt.Println("Entered DeletePost", req.GetID())
+	JWT := string(c.Cookie("JWT"))
+	_, _, _, exp, user_id, err := auth_service.ParseUserJWT(ctx, JWT)
+	if err != nil {
+		c.JSON(consts.StatusUnauthorized, post.DeletePostResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error() + ": Please Delete Post using your own account",
+		})
+		return
+	}
+	if exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, post.DeletePostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Authentification info expired, please login again",
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	err = post_service.DeletePost(ctx, user_id, req.GetID())
+	if errors.Is(err, gorm.ErrRecordNotFound) {
+		c.JSON(consts.StatusNotFound, post.DeletePostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Post not found or no permission.",
+		})
+		return
+	}
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, post.DeletePostResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(consts.StatusOK, post.DeletePostResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+	})
+
 }
 
 // GetSchoolRecentPosts .
@@ -176,7 +215,7 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 	jwtStr := string(c.Cookie("JWT"))
 	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, jwtStr)
 	if err == nil && exp > time.Now().Unix() {
-		viewerID = int64(id)
+		viewerID = id
 	}
 
 	postsWithStats, err := post_service.GetPersonalRecentPostsWithStats(
@@ -335,5 +374,5 @@ func getViewerIDFromJWTOrWriteUnauthorized(
 		return -1, false
 	}
 
-	return int64(uid), true
+	return uid, true
 }

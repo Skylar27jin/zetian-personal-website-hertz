@@ -2,7 +2,9 @@ package post_service
 
 import (
 	"context"
+	"errors"
 	"fmt"
+	"sync"
 	"time"
 
 	"zetian-personal-website-hertz/biz/domain"
@@ -10,6 +12,8 @@ import (
 	"zetian-personal-website-hertz/biz/repository/post_like_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo"
 	"zetian-personal-website-hertz/biz/repository/school_repo"
+
+	"gorm.io/gorm"
 )
 
 // CreatePost
@@ -50,10 +54,50 @@ func EditPost(ctx context.Context, id int64, title string, content string) (*dom
 	return post, nil
 }
 
-// DeletePost
-func DeletePost(ctx context.Context, id int64) error {
-	return post_repo.DeletePost(ctx, id)
+
+// DeletePost deletes a post owned by userID and clears likes/favorites.
+func DeletePost(ctx context.Context, userID, postID int64) error {
+
+	var wg sync.WaitGroup
+	wg.Add(2)
+	errChan := make(chan error, 2)
+
+	// 1. 先清理 likes
+	go func() {
+		defer wg.Done()
+		if err := post_like_repo.DeleteLikesByPostID(ctx, postID); err != nil {
+			errChan <- err
+		}
+	}()
+	// 2. 再清理 favorites
+
+	go func() {
+		defer wg.Done()
+		if err := post_fav_repo.DeleteFavoritesByPostID(ctx, postID); err != nil {
+			errChan <- err
+		}
+	}()
+
+	wg.Wait()
+	close(errChan)
+
+	for err := range errChan{
+		if err != nil{
+			return err
+		}
+	}
+	// 3. 最后删除 post 本身（带 userID 条件，保证只能删自己的）
+	if err := post_repo.DeletePost(ctx, userID, postID); err != nil {
+		// 区分没找到 vs 真错误
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			return err
+		}
+		return err
+	}
+
+	return nil
 }
+
 
 // GetPostByID
 func GetPostByID(ctx context.Context, id int64) (*domain.Post, error) {

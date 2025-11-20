@@ -107,3 +107,13 @@ func GetUserLikedPostIDs(ctx context.Context, userID int64, postIDs []int64) (ma
 	}
 	return result, nil
 }
+
+
+
+// DeleteLikesByPostID deletes all likes for a given post.
+// Called before deleting the post itself to avoid FK violation.
+func DeleteLikesByPostID(ctx context.Context, postID int64) error {
+	return DB.DB.WithContext(ctx).
+		Where("post_id = ?", postID).
+		Delete(&domain.PostLike{}).Error
+}

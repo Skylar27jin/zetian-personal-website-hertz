@@ -152,7 +152,7 @@ func Me(ctx context.Context, c *app.RequestContext) {
 
 	c.JSON(consts.StatusOK, verification.MeResp{
 		IsSuccessful: true,
-		ID:           int32(id),
+		ID:           id,
 		Username:     username,
 		Email:        email,
 	})

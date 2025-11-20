@@ -31,7 +31,7 @@ struct MeReq {
 struct MeResp {
     1: bool is_successful
     2: string error_message
-    3: i32 id;
+    3: i64 id;
     4: string email;
     5: string username;
 }

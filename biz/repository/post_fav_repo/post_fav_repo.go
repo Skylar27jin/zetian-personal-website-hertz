@@ -107,3 +107,10 @@ func GetUserFavoritedPostIDs(ctx context.Context, userID int64, postIDs []int64)
 	}
 	return result, nil
 }
+
+// DeleteFavoritesByPostID deletes all favorites for a given post.
+func DeleteFavoritesByPostID(ctx context.Context, postID int64) error {
+	return DB.DB.WithContext(ctx).
+		Where("post_id = ?", postID).
+		Delete(&domain.PostFavorite{}).Error
+}

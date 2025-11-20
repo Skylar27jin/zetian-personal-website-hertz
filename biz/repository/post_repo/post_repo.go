@@ -6,6 +6,8 @@ import (
 
 	"zetian-personal-website-hertz/biz/domain"
 	DB "zetian-personal-website-hertz/biz/repository"
+
+	"gorm.io/gorm"
 )
 
 
@@ -28,10 +30,22 @@ func UpdatePost(ctx context.Context, post *domain.Post) error {
 	return DB.DB.WithContext(ctx).Save(post).Error
 }
 
+//take in user_id and post_id to ensure only the owner can delete the post
+func DeletePost(ctx context.Context, userID, postID int64) error {
+    tx := DB.DB.WithContext(ctx).
+        Where("id = ? AND user_id = ?", postID, userID).
+        Delete(&domain.Post{})
 
-func DeletePost(ctx context.Context, id int64) error {
-	return DB.DB.WithContext(ctx).Where("id = ?", id).Delete(&domain.Post{}).Error
+    if tx.Error != nil {
+        return tx.Error
+    }
+    if tx.RowsAffected == 0 {
+        // 自定义一个 not found / no permission 错误
+        return gorm.ErrRecordNotFound
+    }
+    return nil
 }
+
 
 
 func ListRecentPosts(ctx context.Context, limit int) ([]domain.Post, error) {

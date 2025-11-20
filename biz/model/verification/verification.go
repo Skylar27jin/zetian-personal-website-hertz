@@ -883,7 +883,7 @@ func (p *MeReq) String() string {
 type MeResp struct {
 	IsSuccessful bool   `thrift:"is_successful,1" form:"is_successful" json:"is_successful" query:"is_successful"`
 	ErrorMessage string `thrift:"error_message,2" form:"error_message" json:"error_message" query:"error_message"`
-	ID           int32  `thrift:"id,3" form:"id" json:"id" query:"id"`
+	ID           int64  `thrift:"id,3" form:"id" json:"id" query:"id"`
 	Email        string `thrift:"email,4" form:"email" json:"email" query:"email"`
 	Username     string `thrift:"username,5" form:"username" json:"username" query:"username"`
 }
@@ -903,7 +903,7 @@ func (p *MeResp) GetErrorMessage() (v string) {
 	return p.ErrorMessage
 }
 
-func (p *MeResp) GetID() (v int32) {
+func (p *MeResp) GetID() (v int64) {
 	return p.ID
 }
 
@@ -959,7 +959,7 @@ func (p *MeResp) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 3:
-			if fieldTypeId == thrift.I32 {
+			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField3(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1035,8 +1035,8 @@ func (p *MeResp) ReadField2(iprot thrift.TProtocol) error {
 }
 func (p *MeResp) ReadField3(iprot thrift.TProtocol) error {
 
-	var _field int32
-	if v, err := iprot.ReadI32(); err != nil {
+	var _field int64
+	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
 		_field = v
@@ -1146,10 +1146,10 @@ WriteFieldEndError:
 }
 
 func (p *MeResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("id", thrift.I32, 3); err != nil {
+	if err = oprot.WriteFieldBegin("id", thrift.I64, 3); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI32(p.ID); err != nil {
+	if err := oprot.WriteI64(p.ID); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
