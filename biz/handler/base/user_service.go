@@ -43,7 +43,7 @@ func Login(ctx context.Context, c *app.RequestContext) {
 	}
 
 	// 生成 JWT 并设置 Cookie
-	token, err := authService.GenerateUserJWT(ctx, -1, int(domainUser.ID), domainUser.Username, domainUser.Email, -1)
+	token, err := authService.GenerateUserJWT(ctx, -1, int64(domainUser.ID), domainUser.Username, domainUser.Email, -1)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, user.LoginResp{
 			IsSuccessful: false,

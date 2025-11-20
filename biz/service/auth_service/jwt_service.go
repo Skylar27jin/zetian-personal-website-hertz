@@ -25,7 +25,7 @@ exp: now + validDuration //exp means expiration time
 }
 
 */
-func GenerateUserJWT(ctx context.Context, now int64,  id int, username string, email string, validDuration int64) (string, error) {
+func GenerateUserJWT(ctx context.Context, now int64,  id int64, username string, email string, validDuration int64) (string, error) {
 	if username == "" || email == "" {
 		return "", fmt.Errorf("username and email cannot be empty")
 	}

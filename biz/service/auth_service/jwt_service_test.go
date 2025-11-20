@@ -25,7 +25,7 @@ func TestGenerateUserJWT(t *testing.T) {
 	now := time.Now().Unix()
 	validDuration := int64(7 * 24 * 3600)
 
-	token, err := GenerateUserJWT(ctx, now, id, username, email, validDuration)
+	token, err := GenerateUserJWT(ctx, now, int64(id), username, email, validDuration)
 	assert.NoError(t, err, "should generate JWT without error")
 	assert.NotEmpty(t, token, "token should not be empty")
 }
@@ -40,7 +40,7 @@ func TestParseUserJWT(t *testing.T) {
 	expectedExp := now + validDuration
 
 	// 先生成
-	token, err := GenerateUserJWT(ctx, now, id, username, email, validDuration)
+	token, err := GenerateUserJWT(ctx, now, int64(id), username, email, validDuration)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
 
