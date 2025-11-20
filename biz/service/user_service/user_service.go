@@ -70,6 +70,15 @@ func GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
 	if err != nil{
 		return nil, fmt.Errorf("db Error: %v", err.Error())
 	}
+	
+	return user, nil
+}
+
+func GetUserByUsername(ctx context.Context, name string) (*domain.User, error) {
+	user, err := userRepo.GetUserByUsername(ctx, name)
+	if err != nil{
+		return nil, fmt.Errorf("db Error: %v", err.Error())
+	}
 
 	return user, nil
 }

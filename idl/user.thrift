@@ -38,5 +38,5 @@ struct GetUserResp {
     1: bool   isSuccessful;
     2: string errorMessage;
     3: string userName;
-    4: string email;
+    4: i64    id;
 }

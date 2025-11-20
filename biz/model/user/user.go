@@ -1173,7 +1173,7 @@ type GetUserResp struct {
 	IsSuccessful bool   `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
 	ErrorMessage string `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
 	UserName     string `thrift:"userName,3" form:"userName" json:"userName" query:"userName"`
-	Email        string `thrift:"email,4" form:"email" json:"email" query:"email"`
+	ID           int64  `thrift:"id,4" form:"id" json:"id" query:"id"`
 }
 
 func NewGetUserResp() *GetUserResp {
@@ -1195,15 +1195,15 @@ func (p *GetUserResp) GetUserName() (v string) {
 	return p.UserName
 }
 
-func (p *GetUserResp) GetEmail() (v string) {
-	return p.Email
+func (p *GetUserResp) GetID() (v int64) {
+	return p.ID
 }
 
 var fieldIDToName_GetUserResp = map[int16]string{
 	1: "isSuccessful",
 	2: "errorMessage",
 	3: "userName",
-	4: "email",
+	4: "id",
 }
 
 func (p *GetUserResp) Read(iprot thrift.TProtocol) (err error) {
@@ -1250,7 +1250,7 @@ func (p *GetUserResp) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 4:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField4(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1321,13 +1321,13 @@ func (p *GetUserResp) ReadField3(iprot thrift.TProtocol) error {
 }
 func (p *GetUserResp) ReadField4(iprot thrift.TProtocol) error {
 
-	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	var _field int64
+	if v, err := iprot.ReadI64(); err != nil {
 		return err
 	} else {
 		_field = v
 	}
-	p.Email = _field
+	p.ID = _field
 	return nil
 }
 
@@ -1423,10 +1423,10 @@ WriteFieldEndError:
 }
 
 func (p *GetUserResp) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("email", thrift.STRING, 4); err != nil {
+	if err = oprot.WriteFieldBegin("id", thrift.I64, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.Email); err != nil {
+	if err := oprot.WriteI64(p.ID); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {

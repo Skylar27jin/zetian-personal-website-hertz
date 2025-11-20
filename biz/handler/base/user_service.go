@@ -139,7 +139,61 @@ func GetUser(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	resp := new(user.GetUserResp)
+	if req.ID < 0 {
+		c.JSON(consts.StatusBadRequest, user.GetUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "ID must be positive",
+			UserName:     "",
+			ID:           -1,
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	if req.ID != 0 && req.Name != "" {
+		c.JSON(consts.StatusBadRequest, user.GetUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "Only one of ID and UserName should be provided",
+			UserName:     "",
+			ID:           -1,
+		})
+		return
+	}
+
+	if req.ID != 0 {
+		domainUser, err := userService.GetUserByID(ctx, req.ID)
+		if err != nil {
+			c.JSON(consts.StatusInternalServerError, user.GetUserResp{
+				IsSuccessful: false,
+				ErrorMessage: err.Error(),
+				UserName:     "",
+				ID:           -1,
+			})
+			return
+		}
+		c.JSON(consts.StatusOK, user.GetUserResp{
+			IsSuccessful: true,
+			ErrorMessage: "",
+			UserName:     domainUser.Username,
+			ID:           int64(domainUser.ID),
+		})
+		return
+	}
+
+	domainUser, err := userService.GetUserByUsername(ctx, req.Name)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, user.GetUserResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+			UserName:     "",
+			ID:           -1,
+		})
+		return
+	}
+	c.JSON(consts.StatusOK, user.GetUserResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		UserName:     domainUser.Username,
+		ID:           int64(domainUser.ID),
+	})
+
 }
