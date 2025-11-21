@@ -99,63 +99,15 @@ func GetPostWithStats(
 	viewerID int64,
 ) (*domain.PostWithStats, error) {
 
-	// 1. 基础 Post
 	post, err := post_repo.GetPostByID(ctx, postID)
 	if err != nil {
 		return nil, err
 	}
-
-	// 2. 学校信息（填充 SchoolName）
-	schoolName := ""
-	if post.SchoolID != 0 {
-		if s, err := school_repo.GetSchoolByID(ctx, post.SchoolID); err == nil && s != nil {
-			// 你可以决定展示 ShortName 还是 Name，这里优先 ShortName
-			if s.ShortName != "" {
-				schoolName = s.ShortName
-			} else {
-				schoolName = s.Name
-			}
-		}
-	}
-
-	// 3. 点赞 / 收藏数量
-	likeCount, err := post_like_repo.CountLikes(ctx, postID)
+	postsWithStats, err := buildPostWithStatsList(ctx, []domain.Post{*post}, viewerID)
 	if err != nil {
 		return nil, err
 	}
-	favCount, err := post_fav_repo.CountFavorites(ctx, postID)
-	if err != nil {
-		return nil, err
-	}
-
-	result := &domain.PostWithStats{
-		Post:          *post,
-		SchoolName:    schoolName,
-		LikeCount:     likeCount,
-		FavCount:      favCount,
-		IsLikedByUser: false,
-		IsFavByUser:   false,
-	}
-
-	// viewerID == -1 就不查用户行为
-	if viewerID == -1 {
-		return result, nil
-	}
-
-	// 4. 当前 viewer 是否点赞 / 收藏
-	liked, err := post_like_repo.HasUserLiked(ctx, viewerID, postID)
-	if err != nil {
-		return nil, err
-	}
-	faved, err := post_fav_repo.HasUserFavorited(ctx, viewerID, postID)
-	if err != nil {
-		return nil, err
-	}
-
-	result.IsLikedByUser = liked
-	result.IsFavByUser = faved
-
-	return result, nil
+	return &postsWithStats[0], nil
 }
 
 // ----------------------------------------------------
@@ -242,81 +194,133 @@ func parseBeforeTime(beforeStr string) (time.Time, error) {
 // - 输入：[]domain.Post
 // - 输出：[]domain.PostWithStats，包含 school_name / like_count / fav_count / user flags
 func buildPostWithStatsList(
-	ctx context.Context,
-	posts []domain.Post,
-	viewerID int64,
+    ctx context.Context,
+    posts []domain.Post,
+    viewerID int64,
 ) ([]domain.PostWithStats, error) {
-	if len(posts) == 0 {
-		return []domain.PostWithStats{}, nil
-	}
+    if len(posts) == 0 {
+        return []domain.PostWithStats{}, nil
+    }
 
-	// 1) 收集 postIDs / schoolIDs
-	postIDs := make([]int64, 0, len(posts))
-	schoolIDs := make([]int64, 0, len(posts))
-	schoolIDSet := make(map[int64]struct{})
+    // 1) 收集 postIDs / schoolIDs
+    postIDs := make([]int64, 0, len(posts))
+    schoolIDs := make([]int64, 0, len(posts))
+    schoolIDSet := make(map[int64]struct{})
 
-	for _, p := range posts {
-		postIDs = append(postIDs, p.ID)
+    for _, p := range posts {
+        postIDs = append(postIDs, p.ID)
 
-		if p.SchoolID != 0 {
-			if _, ok := schoolIDSet[p.SchoolID]; !ok {
-				schoolIDSet[p.SchoolID] = struct{}{}
-				schoolIDs = append(schoolIDs, p.SchoolID)
-			}
-		}
-	}
+        if p.SchoolID != 0 {
+            if _, ok := schoolIDSet[p.SchoolID]; !ok {
+                schoolIDSet[p.SchoolID] = struct{}{}
+                schoolIDs = append(schoolIDs, p.SchoolID)
+            }
+        }
+    }
 
-	// 2) 批量统计点赞/收藏数量
-	likeMap, err := post_like_repo.CountLikesBatch(ctx, postIDs)
-	if err != nil {
-		return nil, err
-	}
-	favMap, err := post_fav_repo.CountFavoritesBatch(ctx, postIDs)
-	if err != nil {
-		return nil, err
-	}
+    var (
+        likeMap   map[int64]int
+        favMap    map[int64]int
+        schoolMap map[int64]*domain.School
+        likedSet  map[int64]bool
+        favSet    map[int64]bool
+    )
 
-	// 3) 批量查学校
-	schoolMap, err := school_repo.GetSchoolsByIDsInCache(schoolIDs)
-	if err != nil {
-		return nil, err
-	}
+    var wg sync.WaitGroup
+    wg.Add(5)
 
-	// 4) viewer 行为（可选）
-	likedSet := map[int64]bool{}
-	favSet := map[int64]bool{}
-	if viewerID != -1 {
-		likedSet, err = post_like_repo.GetUserLikedPostIDs(ctx, viewerID, postIDs)
-		if err != nil {
-			return nil, err
-		}
-		favSet, err = post_fav_repo.GetUserFavoritedPostIDs(ctx, viewerID, postIDs)
-		if err != nil {
-			return nil, err
-		}
-	}
+    errChan := make(chan error, 5)
 
-	// 5) 组装结果
-	res := make([]domain.PostWithStats, 0, len(posts))
-	for _, p := range posts {
-		// 学校显示名：优先 ShortName，其次 Name
-		schoolName := ""
-		if s, ok := schoolMap[p.SchoolID]; ok && s != nil {
-			if s.ShortName != "" {
-				schoolName = s.ShortName
-			} else {
-				schoolName = s.Name
-			}
-		}
+    // 2) 批量统计点赞
+    go func() {
+        defer wg.Done()
+        m, err := post_like_repo.CountLikesBatch(ctx, postIDs)
+        if err != nil {
+            errChan <- err
+            return
+        }
+        likeMap = m
+    }()
 
-		res = append(res, domain.PostWithStats{
-			Post:          p,
-			SchoolName:    schoolName,
-			LikeCount:     likeMap[p.ID],
-			FavCount:      favMap[p.ID],
-			IsLikedByUser: likedSet[p.ID],
-			IsFavByUser:   favSet[p.ID],
-		})
-	}
-	return res, nil
+    // 3) 批量统计收藏
+    go func() {
+        defer wg.Done()
+        m, err := post_fav_repo.CountFavoritesBatch(ctx, postIDs)
+        if err != nil {
+            errChan <- err
+            return
+        }
+        favMap = m
+    }()
+
+    // 4) 批量查学校（从缓存）
+    go func() {
+        defer wg.Done()
+        m, err := school_repo.GetSchoolsByIDsInCache(schoolIDs)
+        if err != nil {
+            errChan <- err
+            return
+        }
+        schoolMap = m
+    }()
+
+    // 5) viewer 点赞信息
+    go func() {
+        defer wg.Done()
+        if viewerID == -1 {
+            return
+        }
+        m, err := post_like_repo.GetUserLikedPostIDs(ctx, viewerID, postIDs)
+        if err != nil {
+            errChan <- err
+            return
+        }
+        likedSet = m
+    }()
+
+    // 6) viewer 收藏信息
+    go func() {
+        defer wg.Done()
+        if viewerID == -1 {
+            return
+        }
+        m, err := post_fav_repo.GetUserFavoritedPostIDs(ctx, viewerID, postIDs)
+        if err != nil {
+            errChan <- err
+            return
+        }
+        favSet = m
+    }()
+
+    wg.Wait()
+    close(errChan)
+    for err := range errChan {
+        if err != nil {
+            return nil, err
+        }
+    }
+
+    // nil map 这里是安全的，直接用 likeMap[p.ID] 也不会 panic
+    res := make([]domain.PostWithStats, 0, len(posts))
+    for _, p := range posts {
+        // 学校显示名：优先 ShortName，其次 Name
+        schoolName := ""
+        if s, ok := schoolMap[p.SchoolID]; ok && s != nil {
+            if s.ShortName != "" {
+                schoolName = s.ShortName
+            } else {
+                schoolName = s.Name
+            }
+        }
+
+        res = append(res, domain.PostWithStats{
+            Post:          p,
+            SchoolName:    schoolName,
+            LikeCount:     likeMap[p.ID],
+            FavCount:      favMap[p.ID],
+            IsLikedByUser: likedSet[p.ID],
+            IsFavByUser:   favSet[p.ID],
+        })
+    }
+    return res, nil
 }
