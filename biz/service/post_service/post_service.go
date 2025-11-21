@@ -55,7 +55,6 @@ func DeletePost(ctx context.Context, userID, postID int64) error {
 		}
 	}()
 	// 2. 再清理 favorites
-
 	go func() {
 		defer wg.Done()
 		if err := post_fav_repo.DeleteFavoritesByPostID(ctx, postID); err != nil {
@@ -278,7 +277,7 @@ func buildPostWithStatsList(
 	}
 
 	// 3) 批量查学校
-	schoolMap, err := school_repo.GetSchoolsByIDs(ctx, schoolIDs)
+	schoolMap, err := school_repo.GetSchoolsByIDsInCache(schoolIDs)
 	if err != nil {
 		return nil, err
 	}

@@ -199,6 +199,7 @@ func GetSchoolRecentPosts(ctx context.Context, c *app.RequestContext) {
 // GetPersonalRecentPosts
 // @router /post/personal [GET]
 func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
+
 	var req post.GetPersonalRecentPostsReq
 
 	if err := c.BindAndValidate(&req); err != nil {
@@ -210,6 +211,9 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	if req.Limit == 0 {
+		req.Limit = 10 // default limit
+	}
 	// get viewer from JWT
 	viewerID := int64(-1)
 	jwtStr := string(c.Cookie("JWT"))
