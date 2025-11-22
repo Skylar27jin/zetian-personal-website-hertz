@@ -30,6 +30,9 @@ struct Post {
     21: i64 last_comment_at,       // timestamp of last comment
     22: i64 hot_score,             // sort score for hot posts
 
+    23: optional string user_name,  // 新增
+
+
 }
 
 //get--------------------------------------------------------------

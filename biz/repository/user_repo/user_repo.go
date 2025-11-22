@@ -25,6 +25,23 @@ func GetUserByID(ctx context.Context, id int64) (*domain.User, error) {
     return &user, nil
 }
 
+func GetUsersByIDs(ctx context.Context, ids []int64) (map[int64]*domain.User, error) {
+	var users []*domain.User
+	err := DB.DB.WithContext(ctx).Where("id IN ?", ids).Find(&users).Error
+	if err != nil {
+		return nil, err
+	}
+
+	userMap := make(map[int64]*domain.User)
+	for _, user := range users {
+		if user == nil {
+			continue
+		}
+		userMap[int64(user.ID)] = user
+	}
+	return userMap, nil
+}
+
 
 func GetUserByUsername(ctx context.Context, username string) (*domain.User, error) {
     var user domain.User

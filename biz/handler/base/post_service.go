@@ -47,8 +47,8 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 	// 对应 service 中 IsLikedByUser / IsFavByUser 会默认 false，
 	// 同时 view_count 不会自增。
 
-	// 2) get post with stats + user flags（内部会按规则自增 view_count）
-	domainPostFull, err := post_service.GetPostWithStats(ctx, req.ID, viewerID)
+	// 2) get post（内部会按规则自增 view_count）
+	domainPostFull, err := post_service.GetPost(ctx, req.ID, viewerID)
 	if err != nil {
 		status := consts.StatusBadRequest
 		if errors.Is(err, gorm.ErrRecordNotFound) {

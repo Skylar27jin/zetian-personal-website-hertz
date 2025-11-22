@@ -38,6 +38,8 @@ type Post struct {
 	LastCommentAt int64 `thrift:"last_comment_at,21" form:"last_comment_at" json:"last_comment_at" query:"last_comment_at"`
 	// sort score for hot posts
 	HotScore int64 `thrift:"hot_score,22" form:"hot_score" json:"hot_score" query:"hot_score"`
+	// 新增
+	UserName *string `thrift:"user_name,23,optional" form:"user_name" json:"user_name,omitempty" query:"user_name"`
 }
 
 func NewPost() *Post {
@@ -150,6 +152,15 @@ func (p *Post) GetHotScore() (v int64) {
 	return p.HotScore
 }
 
+var Post_UserName_DEFAULT string
+
+func (p *Post) GetUserName() (v string) {
+	if !p.IsSetUserName() {
+		return Post_UserName_DEFAULT
+	}
+	return *p.UserName
+}
+
 var fieldIDToName_Post = map[int16]string{
 	1:  "id",
 	2:  "user_id",
@@ -173,6 +184,7 @@ var fieldIDToName_Post = map[int16]string{
 	20: "share_count",
 	21: "last_comment_at",
 	22: "hot_score",
+	23: "user_name",
 }
 
 func (p *Post) IsSetLocation() bool {
@@ -185,6 +197,10 @@ func (p *Post) IsSetTags() bool {
 
 func (p *Post) IsSetReplyTo() bool {
 	return p.ReplyTo != nil
+}
+
+func (p *Post) IsSetUserName() bool {
+	return p.UserName != nil
 }
 
 func (p *Post) Read(iprot thrift.TProtocol) (err error) {
@@ -377,6 +393,14 @@ func (p *Post) Read(iprot thrift.TProtocol) (err error) {
 		case 22:
 			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField22(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 23:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField23(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -677,6 +701,17 @@ func (p *Post) ReadField22(iprot thrift.TProtocol) error {
 	p.HotScore = _field
 	return nil
 }
+func (p *Post) ReadField23(iprot thrift.TProtocol) error {
+
+	var _field *string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = &v
+	}
+	p.UserName = _field
+	return nil
+}
 
 func (p *Post) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
@@ -770,6 +805,10 @@ func (p *Post) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField22(oprot); err != nil {
 			fieldId = 22
+			goto WriteFieldError
+		}
+		if err = p.writeField23(oprot); err != nil {
+			fieldId = 23
 			goto WriteFieldError
 		}
 	}
@@ -1184,6 +1223,25 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 22 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 22 end error: ", p), err)
+}
+
+func (p *Post) writeField23(oprot thrift.TProtocol) (err error) {
+	if p.IsSetUserName() {
+		if err = oprot.WriteFieldBegin("user_name", thrift.STRING, 23); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.UserName); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 23 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 23 end error: ", p), err)
 }
 
 func (p *Post) String() string {

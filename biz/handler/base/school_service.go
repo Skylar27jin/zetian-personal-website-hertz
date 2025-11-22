@@ -35,12 +35,11 @@ func GetAllSchools(ctx context.Context, c *app.RequestContext) {
 	thriftSchools := make([]*school.School, 0, len(schools))
 	for _, s := range schools {
 		thriftSchools = append(thriftSchools, &school.School{
-			ID:        		s.ID,
-			Name:      		s.Name,
-			ShortName: 		s.ShortName,
-			Aliases: 		s.Aliases,
-			Description: 	s.Description,
-
+			ID:          s.ID,
+			Name:        s.Name,
+			ShortName:   s.ShortName,
+			Aliases:     s.Aliases,
+			Description: s.Description,
 		})
 	}
 

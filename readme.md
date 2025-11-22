@@ -3,7 +3,17 @@
 2. Hertz's handler(or "controller" in spring boot term) is defined in a IDL(interface define language) file. (This is why Hertz is "Document-Oriendted Programming")
 3. After IDL is defined, you could run a command and let Hertz generates correponding codes for you.
 
-#Thrift
+# install Hertz
+```
+go install github.com/cloudwego/hertz/cmd/hz@latest
+
+export PATH=$PATH:$(go env GOPATH)/bin
+
+echo 'export PATH=$PATH:$(go env GOPATH)/bin' >> ~/.zshrc
+source ~/.zshrc
+```
+
+# Thrift
 Thrift is a IDL, protobuf is another IDL. In this project, I used thrift as I have experiences writing thrift. In real life, protobuf seems to be more popular.
 ## Init the Hertz by Force(DO NOT do this): 
 

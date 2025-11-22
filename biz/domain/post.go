@@ -24,6 +24,7 @@ type PostBase struct {
 
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
+
 }
 
 //Post's stats
@@ -43,6 +44,7 @@ type Post struct {
 	PostStats
 
 	SchoolName    string `json:"school_name"`
+	UserName      string `json:"user_name" gorm:"-"`
 	IsLikedByUser bool   `json:"is_liked_by_user"`
 	IsFavByUser   bool   `json:"is_fav_by_user"`
 }
@@ -137,6 +139,7 @@ func ToDomainPost(tp thrift.Post) Post {
 		SchoolName:    tp.SchoolName,
 		IsLikedByUser: tp.IsLikedByUser,
 		IsFavByUser:   tp.IsFavByUser,
+		UserName:      *tp.UserName,
 	}
 }
 
@@ -156,6 +159,7 @@ func CombineToThriftPost(
 	schoolName string,
 	liked bool,
 	faved bool,
+	userName string,
 ) thrift.Post {
 
 	var tags []string
@@ -195,6 +199,8 @@ func CombineToThriftPost(
 		// User interaction flags (not stored in DB)
 		IsLikedByUser: liked,
 		IsFavByUser:   faved,
+		UserName:      &userName,
+
 	}
 }
 
@@ -210,6 +216,7 @@ func DomainPostToThrift(p Post) thrift.Post {
 		p.SchoolName,
 		p.IsLikedByUser,
 		p.IsFavByUser,
+		p.UserName,
 	)
 }
 

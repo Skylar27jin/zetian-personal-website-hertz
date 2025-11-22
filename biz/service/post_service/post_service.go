@@ -14,6 +14,7 @@ import (
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_stats_repo"
     "zetian-personal-website-hertz/biz/repository/post_repo/post_base_repo"
 	"zetian-personal-website-hertz/biz/repository/school_repo"
+	"zetian-personal-website-hertz/biz/repository/user_repo"
 
 	"gorm.io/gorm"
 )
@@ -203,76 +204,56 @@ func DeletePost(ctx context.Context, userID, postID int64) error {
 }
 
 ///////////////////////////////////////////////////////////////////////////////
-// Single Post with Stats
+// Single Post
 ///////////////////////////////////////////////////////////////////////////////
 
-// GetPostWithStats returns:
+// GetPost returns:
 //   - post base
 //   - post stats (view/like/fav/etc.)
 //   - school_name
 //   - IsLikedByUser / IsFavByUser for the given viewer
+//	- user_name
 //
 // Special behavior:
 //   - If viewerID > 0 and viewerID != authorID, view_count will be incremented by 1 (best-effort).
 //   - If stats row is missing, a zero-valued stats object is used.
-func GetPostWithStats(
+func GetPost(
 	ctx context.Context,
 	postID int64,
 	viewerID int64,
 ) (*domain.Post, error) {
 
-	// 1) load base
+	// 1) load base (must exist)
 	base, err := post_base_repo.GetPostBaseByID(ctx, postID)
 	if err != nil {
 		return nil, fmt.Errorf("failed to load post: %w", err)
 	}
 
-	// 2) load stats
-	stats, err := post_stats_repo.GetStats(ctx, postID)
-	if err != nil {
-		if !errors.Is(err, gorm.ErrRecordNotFound) {
-			return nil, fmt.Errorf("failed to load post stats: %w", err)
-		}
-		stats = &domain.PostStats{PostID: postID}
-	}
-
-	// 3) auto increment view_count when viewer is not the author
+	// 2) auto increment view_count when viewer != author
 	if viewerID > 0 && viewerID != base.UserID {
-		if err := post_stats_repo.IncrementView(ctx, postID, 1); err == nil {
-			// best-effort: reflect increment in memory
-			stats.ViewCount++
-		}
+		// best-effort: update stats table
+		_ = post_stats_repo.IncrementView(ctx, postID, 1)
 	}
 
-	// 4) resolve school name (from cache)
-	schoolName := ""
-	if s, err := school_repo.GetSchoolByIDInCache(base.SchoolID); err == nil && s != nil {
-		if s.ShortName != "" {
-			schoolName = s.ShortName
-		} else {
-			schoolName = s.Name
-		}
+	// 3) reuse the list builder to load:
+	//    - stats
+	//    - school_name
+	//    - user_name
+	//    - like/fav flags
+	posts, err := buildPostListWithStats(ctx, []domain.PostBase{*base}, viewerID)
+	if err != nil {
+		return nil, fmt.Errorf("failed building post with stats: %w", err)
 	}
 
-	// 5) user interaction flags
-	liked := false
-	faved := false
-	if viewerID > 0 {
-		if ok, err := post_like_repo.HasUserLiked(ctx, viewerID, postID); err == nil {
-			liked = ok
-		}
-		if ok, err := post_fav_repo.HasUserFavorited(ctx, viewerID, postID); err == nil {
-			faved = ok
-		}
+	if len(posts) == 0 {
+		// should not happen, but safe guard
+		return nil, fmt.Errorf("post %d not found after build", postID)
 	}
 
-	return &domain.Post{
-		PostBase:      *base,
-		PostStats:     *stats,
-		SchoolName:    schoolName,
-		IsLikedByUser: liked,
-		IsFavByUser:   faved,
-	}, nil
+	// 4) result is the only element
+	p := &posts[0]
+
+	return p, nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////
@@ -494,18 +475,19 @@ func parseBeforeTime(beforeStr string) (time.Time, error) {
 	// fallback to RFC3339
 	return time.Parse(time.RFC3339, beforeStr)
 }
-
 // buildPostListWithStats:
 //   - Input: []PostBase
 //   - Output: []Post with:
 //       * base fields
 //       * stats from post_stats
 //       * school_name
+//       * user_name
 //       * IsLikedByUser / IsFavByUser for given viewer
 //
 // Implementation details:
 //   - Stats are loaded by looping GetStats per post (N is usually small, e.g. 10/20).
 //   - Schools are loaded in a single call from in-memory cache.
+//   - Users are loaded in batch by user IDs.
 //   - Viewer interactions are loaded in batch via GetUserLikedPostIDs / GetUserFavoritedPostIDs.
 func buildPostListWithStats(
 	ctx context.Context,
@@ -516,17 +498,28 @@ func buildPostListWithStats(
 		return []domain.Post{}, nil
 	}
 
-	// Collect postIDs / schoolIDs (deduplicated)
+	// Collect postIDs / schoolIDs / userIDs (deduplicated)
 	postIDs := make([]int64, 0, len(bases))
 	schoolIDs := make([]int64, 0, len(bases))
+	userIDs := make([]int64, 0, len(bases))
+
 	schoolIDSet := make(map[int64]struct{})
+	userIDSet := make(map[int64]struct{})
 
 	for _, b := range bases {
 		postIDs = append(postIDs, b.ID)
+
 		if b.SchoolID != 0 {
 			if _, ok := schoolIDSet[b.SchoolID]; !ok {
 				schoolIDSet[b.SchoolID] = struct{}{}
 				schoolIDs = append(schoolIDs, b.SchoolID)
+			}
+		}
+
+		if b.UserID != 0 {
+			if _, ok := userIDSet[b.UserID]; !ok {
+				userIDSet[b.UserID] = struct{}{}
+				userIDs = append(userIDs, b.UserID)
 			}
 		}
 	}
@@ -534,12 +527,13 @@ func buildPostListWithStats(
 	var (
 		statsMap  map[int64]*domain.PostStats
 		schoolMap map[int64]*domain.School
+		userMap   map[int64]*domain.User
 		likedSet  map[int64]bool
 		favSet    map[int64]bool
 	)
 
 	var wg sync.WaitGroup
-	errChan := make(chan error, 4)
+	errChan := make(chan error, 5)
 
 	// 1) load stats for each post (simple loop; N typically small)
 	wg.Add(1)
@@ -573,7 +567,23 @@ func buildPostListWithStats(
 		schoolMap = m
 	}()
 
-	// 3) viewer liked set
+	// 3) load users in batch
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if len(userIDs) == 0 {
+			userMap = map[int64]*domain.User{}
+			return
+		}
+		m, err := user_repo.GetUsersByIDs(ctx, userIDs)
+		if err != nil {
+			errChan <- fmt.Errorf("get users by ids: %w", err)
+			return
+		}
+		userMap = m
+	}()
+
+	// 4) viewer liked set
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -590,7 +600,7 @@ func buildPostListWithStats(
 		likedSet = m
 	}()
 
-	// 4) viewer favorited set
+	// 5) viewer favorited set
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -633,10 +643,17 @@ func buildPostListWithStats(
 			}
 		}
 
+		// user_name
+		userName := ""
+		if u, ok := userMap[b.UserID]; ok && u != nil && u.Username != "" {
+			userName = u.Username
+		}
+
 		res = append(res, domain.Post{
 			PostBase:      b,
 			PostStats:     *s,
 			SchoolName:    schoolName,
+			UserName:      userName,
 			IsLikedByUser: likedSet[b.ID],
 			IsFavByUser:   favSet[b.ID],
 		})
