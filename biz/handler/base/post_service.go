@@ -137,7 +137,7 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 	})
 }
 
-//if req.content or req.title is empty, corresponding cell in db will be updated to empty string!
+// if req.content or req.title is empty, corresponding cell in db will be updated to empty string!
 // EditPost .
 // @router /post/edit [POST]
 func EditPost(ctx context.Context, c *app.RequestContext) {
@@ -146,7 +146,7 @@ func EditPost(ctx context.Context, c *app.RequestContext) {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
-	
+
 	if req.GetTitle() == "" || req.GetContent() == "" {
 		c.JSON(consts.StatusBadRequest, post.EditPostResp{
 			IsSuccessful: false,
@@ -154,7 +154,7 @@ func EditPost(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	
+
 	// jwt
 	jwtStr := string(c.Cookie("JWT"))
 	_, _, _, exp, user_id, err := auth_service.ParseUserJWT(ctx, jwtStr)

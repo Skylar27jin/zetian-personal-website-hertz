@@ -130,3 +130,13 @@ func _logoutMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _school0Mw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getallschoolsMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

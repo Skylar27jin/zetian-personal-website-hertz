@@ -39,6 +39,10 @@ func Register(r *server.Hertz) {
 		}
 	}
 	{
+		_school0 := root.Group("/school", _school0Mw()...)
+		_school0.GET("/all", append(_getallschoolsMw(), base.GetAllSchools)...)
+	}
+	{
 		_user := root.Group("/user", _userMw()...)
 		_user.GET("/get", append(_getuserMw(), base.GetUser)...)
 	}

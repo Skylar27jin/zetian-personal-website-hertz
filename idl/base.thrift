@@ -4,6 +4,7 @@ include "user.thrift"
 include "numberOperation.thrift"
 include "verification.thrift"
 include "post.thrift"
+include "school.thrift"
 
 service UserService {
     user.LoginResp Login(1: user.LoginReq request) (api.post="/login");
@@ -48,4 +49,8 @@ service PostService {
     post.UnlikePostReq UnlikePost(1: post.UserFlagPostResq request) (api.post="/post/unlike")
     post.FavPostReq FavPost(1: post.UserFlagPostResq request) (api.post="/post/fav")
     post.UnfavPostReq UnfavPost(1: post.UserFlagPostResq request) (api.post="/post/unfav")
+}
+
+service SchoolService {
+    school.GetAllSchoolsResp GetAllSchools(1: school.GetAllSchoolsReq request) (api.get="/school/all");
 }
