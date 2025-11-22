@@ -214,7 +214,6 @@ func Logout(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-
 	clearAuthCookie(c)
 	c.JSON(consts.StatusOK, user.LogoutResp{
 		IsSuccessful: true,

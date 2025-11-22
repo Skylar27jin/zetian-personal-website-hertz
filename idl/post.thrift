@@ -10,15 +10,26 @@ struct Post {
     5: string title,
     6: string content,
 
-    7: i32 like_count, //aggregated
-    8: i32 fav_count, //aggregated
-    9: i32 view_count, //in db
+    7: optional string location,   // where is the post created
+    8: optional list<string> tags, // hashtags
+    9: string media_type,         // "text" / "image" / "video": multi-media post type
+    10: list<string> media_urls,   // 图片、视频 URL 列表
+    11: optional i64 reply_to,      // reply to what post id
 
-    10: string created_at,
-    11: string updated_at,
+    12: string created_at,
+    13: string updated_at,
 
-    12: bool is_liked_by_user,
-    13: bool is_fav_by_user,
+    14: bool is_liked_by_user,
+    15: bool is_fav_by_user,
+
+    16: i32 like_count,
+    17: i32 fav_count,
+    18: i32 view_count,
+    19: i32 comment_count,
+    20: i32 share_count,
+    21: i64 last_comment_at,       // timestamp of last comment
+    22: i64 hot_score,             // sort score for hot posts
+
 }
 
 //get--------------------------------------------------------------

@@ -1,146 +1,236 @@
 package domain
 
 import (
+	"encoding/json"
 	"time"
 	thrift "zetian-personal-website-hertz/biz/model/post"
 )
 
-// Post — database row model
-type Post struct {
+// PostBase — database row model
+type PostBase struct {
 	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserID    int64     `json:"user_id"`
 	SchoolID  int64     `json:"school_id"`
 	Title     string    `json:"title" gorm:"type:varchar(255)"`
 	Content   string    `json:"content" gorm:"type:text"`
-	ViewCount int       `json:"view_count"`
+
+	MediaType string    `json:"media_type" gorm:"type:varchar(50)"`
+	MediaUrls string    `json:"media_urls" gorm:"type:text"` // 存 JSON 字符串，[]string
+
+	Location *string    `json:"location" gorm:"type:varchar(255)"`
+	Tags     string     `json:"tags" gorm:"type:text"` // 存 JSON 字符串，[]string
+
+	ReplyTo *int64      `json:"reply_to" gorm:"default:null"`
+
 	CreatedAt time.Time `json:"created_at" gorm:"autoCreateTime"`
 	UpdatedAt time.Time `json:"updated_at" gorm:"autoUpdateTime"`
 }
 
-// PostWithStats — Post + like/fav count + user interaction
-type PostWithStats struct {
-	Post          Post  `json:"post"`
-	SchoolName	  string `json:"school_name"`
-	LikeCount     int   `json:"like_count"`
-	FavCount      int   `json:"fav_count"`
-	IsLikedByUser bool  `json:"is_liked_by_user"`
-	IsFavByUser   bool  `json:"is_fav_by_user"`
+//Post's stats
+type PostStats struct {
+	PostID        int64 `json:"post_id" gorm:"primaryKey"`
+	ViewCount     int32 `json:"view_count"`
+	LikeCount     int32 `json:"like_count"`
+	FavCount      int32 `json:"fav_count"`
+	CommentCount  int32 `json:"comment_count"`
+	ShareCount    int32 `json:"share_count"`
+	LastCommentAt int64 `json:"last_comment_at"`
+	HotScore      int64 `json:"hot_score"`
 }
+
+type Post struct {
+	PostBase
+	PostStats
+
+	SchoolName    string `json:"school_name"`
+	IsLikedByUser bool   `json:"is_liked_by_user"`
+	IsFavByUser   bool   `json:"is_fav_by_user"`
+}
+
+
+/*
+Converter overview
+------------------
+We follow a clean separation:
+
+- PostBase:  original DB row (post metadata + content)
+- PostStats: aggregated counters (likes, views, etc.)
+- Post:      combined structure returned to clients
+
+This file converts between:
+    thrift.Post ↔ PostBase + PostStats + Post
+
+Special behaviors are explicitly documented below.
+*/
+
 // -----------------------------------------------------------------------------
-// Converters
+// Thrift → Domain (PostBase)
 // -----------------------------------------------------------------------------
 
-// thrift.Post -> domain.Post
-// 注意：这里仍然只关心最基础的 Post，不填 school_name / like_count 等
-func FromThriftPostToDomainPost(tp thrift.Post) Post {
+// ToDomainPostBase converts thrift.Post → PostBase.
+// Special behavior:
+//   - Tags and MediaUrls are marshaled into JSON strings and stored as TEXT.
+//   - Time strings (RFC3339Nano) are parsed without strict error handling.
+//     If parsing fails, zero values of time.Time are used.
+func ToDomainPostBase(tp thrift.Post) PostBase {
 	createdAt, _ := time.Parse(time.RFC3339Nano, tp.CreatedAt)
 	updatedAt, _ := time.Parse(time.RFC3339Nano, tp.UpdatedAt)
-	return Post{
+
+	// tags: []string → string(JSON)
+	tagsJson, _ := json.Marshal(tp.Tags)
+
+	// media_urls: []string → string(JSON)
+	mediaUrlsJson, _ := json.Marshal(tp.MediaUrls)
+
+	return PostBase{
 		ID:        tp.ID,
 		UserID:    tp.UserID,
 		SchoolID:  tp.SchoolID,
 		Title:     tp.Title,
 		Content:   tp.Content,
-		ViewCount: int(tp.ViewCount),
+		MediaType: tp.MediaType,
+		MediaUrls: string(mediaUrlsJson),
+
+		// pointer field: nil means no location
+		Location: tp.Location,
+
+		// tags stored as JSON string
+		Tags: string(tagsJson),
+
+		// pointer: nil means "not a reply"
+		ReplyTo: tp.ReplyTo,
+
 		CreatedAt: createdAt,
 		UpdatedAt: updatedAt,
 	}
 }
 
-// domain.Post -> thrift.Post
-// 注意：这里只能填基础字段，school_name/like/fav/user flags 用默认值
-func FromDomainPostToThriftPost(p Post) thrift.Post {
-	return thrift.Post{
-		ID:            p.ID,
-		UserID:        p.UserID,
-		SchoolID:      p.SchoolID,
-		SchoolName:    "",    // 默认空，通常用 PostWithStats 的版本返回带名字的
-		Title:         p.Title,
-		Content:       p.Content,
-		ViewCount:     int32(p.ViewCount),
-		LikeCount:     0,
-		FavCount:      0,
-		IsLikedByUser: false,
-		IsFavByUser:   false,
-		CreatedAt:     p.CreatedAt.Format(time.RFC3339Nano),
-		UpdatedAt:     p.UpdatedAt.Format(time.RFC3339Nano),
+// -----------------------------------------------------------------------------
+// Thrift → Domain (PostStats)
+// -----------------------------------------------------------------------------
+
+// ToDomainPostStats converts thrift.Post → PostStats.
+// Note: all counters fit within int32 / int64 as defined in Thrift.
+// No precision loss occurs here.
+func ToDomainPostStats(tp thrift.Post) PostStats {
+	return PostStats{
+		PostID:        tp.ID,
+		ViewCount:     tp.ViewCount,
+		LikeCount:     tp.LikeCount,
+		FavCount:      tp.FavCount,
+		CommentCount:  tp.CommentCount,
+		ShareCount:    tp.ShareCount,
+		LastCommentAt: tp.LastCommentAt,
+		HotScore:      tp.HotScore,
 	}
 }
 
-// []thrift.Post -> []domain.Post
-func FromThriftPostListToDomainPostList(tps []thrift.Post) []Post {
-	list := make([]Post, len(tps))
-	for i, tp := range tps {
-		list[i] = FromThriftPostToDomainPost(tp)
-	}
-	return list
-}
+// -----------------------------------------------------------------------------
+// Thrift → Domain (Combined Post)
+// -----------------------------------------------------------------------------
 
-// []domain.Post -> []thrift.Post
-func FromDomainPostListToThriftPostList(posts []Post) []thrift.Post {
-	list := make([]thrift.Post, len(posts))
-	for i, p := range posts {
-		list[i] = FromDomainPostToThriftPost(p)
-	}
-	return list
-}
-
-// thrift.Post -> domain.PostWithStats
-func FromThriftPostToDomainPostWithStats(tp thrift.Post) PostWithStats {
-	createdAt, _ := time.Parse(time.RFC3339Nano, tp.CreatedAt)
-	updatedAt, _ := time.Parse(time.RFC3339Nano, tp.UpdatedAt)
-	return PostWithStats{
-		Post: Post{
-			ID:        tp.ID,
-			UserID:    tp.UserID,
-			SchoolID:  tp.SchoolID,
-			Title:     tp.Title,
-			Content:   tp.Content,
-			ViewCount: int(tp.ViewCount),
-			CreatedAt: createdAt,
-			UpdatedAt: updatedAt,
-		},
-		SchoolName:    tp.SchoolName,   // ✅ 带上学校名字
-		LikeCount:     int(tp.LikeCount),
-		FavCount:      int(tp.FavCount),
+// ToDomainPost combines PostBase + PostStats + user interaction flags.
+func ToDomainPost(tp thrift.Post) Post {
+	return Post{
+		PostBase:      ToDomainPostBase(tp),
+		PostStats:     ToDomainPostStats(tp),
+		SchoolName:    tp.SchoolName,
 		IsLikedByUser: tp.IsLikedByUser,
 		IsFavByUser:   tp.IsFavByUser,
 	}
 }
 
-// domain.PostWithStats -> thrift.Post
-func FromDomainPostWithStatsToThriftPost(p PostWithStats) thrift.Post {
+// -----------------------------------------------------------------------------
+// Domain → Thrift (Base + Stats)
+// -----------------------------------------------------------------------------
+
+// CombineToThriftPost rebuilds a full thrift.Post.
+// Special behavior:
+//   - Tags and MediaUrls stored as JSON strings must be unmarshaled back to []string.
+//   - Time fields are formatted using RFC3339Nano.
+//   - Pointer fields (Location, ReplyTo) are passed through directly.
+//   - Missing stats or flags should be passed explicitly by callers.
+func CombineToThriftPost(
+	base PostBase,
+	stats PostStats,
+	schoolName string,
+	liked bool,
+	faved bool,
+) thrift.Post {
+
+	var tags []string
+	var mediaUrls []string
+
+	// JSON string → []string
+	_ = json.Unmarshal([]byte(base.Tags), &tags)
+	_ = json.Unmarshal([]byte(base.MediaUrls), &mediaUrls)
+
 	return thrift.Post{
-		ID:            p.Post.ID,
-		UserID:        p.Post.UserID,
-		SchoolID:      p.Post.SchoolID,
-		SchoolName:    p.SchoolName, // ✅ 写回 thrift
-		Title:         p.Post.Title,
-		Content:       p.Post.Content,
-		ViewCount:     int32(p.Post.ViewCount),
-		LikeCount:     int32(p.LikeCount),
-		FavCount:      int32(p.FavCount),
-		IsLikedByUser: p.IsLikedByUser,
-		IsFavByUser:   p.IsFavByUser,
-		CreatedAt:     p.Post.CreatedAt.Format(time.RFC3339Nano),
-		UpdatedAt:     p.Post.UpdatedAt.Format(time.RFC3339Nano),
+		// Base fields
+		ID:         base.ID,
+		UserID:     base.UserID,
+		SchoolID:   base.SchoolID,
+		SchoolName: schoolName,
+		Title:      base.Title,
+		Content:    base.Content,
+		MediaType:  base.MediaType,
+		MediaUrls:  mediaUrls,
+		Location:   base.Location,
+		Tags:       tags,
+		ReplyTo:    base.ReplyTo,
+
+		// Time (RFC3339Nano)
+		CreatedAt: base.CreatedAt.Format(time.RFC3339Nano),
+		UpdatedAt: base.UpdatedAt.Format(time.RFC3339Nano),
+
+		// Aggregation fields
+		ViewCount:     stats.ViewCount,
+		LikeCount:     stats.LikeCount,
+		FavCount:      stats.FavCount,
+		CommentCount:  stats.CommentCount,
+		ShareCount:    stats.ShareCount,
+		LastCommentAt: stats.LastCommentAt,
+		HotScore:      stats.HotScore,
+
+		// User interaction flags (not stored in DB)
+		IsLikedByUser: liked,
+		IsFavByUser:   faved,
 	}
 }
 
-// []thrift.Post -> []domain.PostWithStats
-func FromThriftPostListToPostWithStatsList(tps []thrift.Post) []PostWithStats {
-	list := make([]PostWithStats, len(tps))
+// -----------------------------------------------------------------------------
+// Domain → Thrift (Full Post)
+// -----------------------------------------------------------------------------
+
+// DomainPostToThrift is a convenience wrapper for a complete Post struct.
+func DomainPostToThrift(p Post) thrift.Post {
+	return CombineToThriftPost(
+		p.PostBase,
+		p.PostStats,
+		p.SchoolName,
+		p.IsLikedByUser,
+		p.IsFavByUser,
+	)
+}
+
+// -----------------------------------------------------------------------------
+// List Converters
+// -----------------------------------------------------------------------------
+
+// ToDomainPostList converts []thrift.Post → []Post.
+func ToDomainPostList(tps []thrift.Post) []Post {
+	list := make([]Post, len(tps))
 	for i, tp := range tps {
-		list[i] = FromThriftPostToDomainPostWithStats(tp)
+		list[i] = ToDomainPost(tp)
 	}
 	return list
 }
 
-// []domain.PostWithStats -> []thrift.Post
-func FromPostWithStatsListToThriftPostList(posts []PostWithStats) []thrift.Post {
+// DomainPostListToThrift converts []Post → []thrift.Post.
+func DomainPostListToThrift(posts []Post) []thrift.Post {
 	list := make([]thrift.Post, len(posts))
 	for i, p := range posts {
-		list[i] = FromDomainPostWithStatsToThriftPost(p)
+		list[i] = DomainPostToThrift(p)
 	}
 	return list
 }
