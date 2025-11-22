@@ -36,20 +36,25 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	//get viewer from JWT
+	// get viewer from JWT
 	viewerID := int64(-1)
-	JWT := string(c.Cookie("JWT"))
-	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, jwtStr)
 	if err == nil && exp > time.Now().Unix() {
 		viewerID = id
 	}
 	// 若 JWT 不存在 / 解析失败 / 过期，则 viewerID 保持 -1，
-	// 对应 service 中 IsLikedByUser / IsFavByUser 会默认 false。
+	// 对应 service 中 IsLikedByUser / IsFavByUser 会默认 false，
+	// 同时 view_count 不会自增。
 
-	// 2) get post with like/fav counts and user flags
+	// 2) get post with stats + user flags（内部会按规则自增 view_count）
 	domainPostFull, err := post_service.GetPostWithStats(ctx, req.ID, viewerID)
 	if err != nil {
-		c.JSON(consts.StatusBadRequest, post.GetPostByIDResp{
+		status := consts.StatusBadRequest
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = consts.StatusNotFound
+		}
+		c.JSON(status, post.GetPostByIDResp{
 			IsSuccessful: false,
 			ErrorMessage: err.Error(),
 			Post:         nil,
@@ -57,8 +62,8 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 转 thrift.Post
-	thriftPost := domain.FromDomainPostWithStatsToThriftPost(*domainPostFull)
+	// 新版转换：domain.Post -> thrift.Post
+	thriftPost := domain.DomainPostToThrift(*domainPostFull)
 
 	c.JSON(consts.StatusOK, post.GetPostByIDResp{
 		IsSuccessful: true,
@@ -70,15 +75,22 @@ func GetPostByID(ctx context.Context, c *app.RequestContext) {
 // CreatePost .
 // @router /post/create [POST]
 func CreatePost(ctx context.Context, c *app.RequestContext) {
-	var err error
 	var req post.CreatePostReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
+	if err := c.BindAndValidate(&req); err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
-	JWT := string(c.Cookie("JWT"))
-	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, JWT)
+
+	if req.GetTitle() == "" || req.GetContent() == "" {
+		c.JSON(consts.StatusBadRequest, post.CreatePostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Title or Content cannot be empty",
+		})
+		return
+	}
+
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, jwtStr)
 	if err != nil || id != req.GetUserID() {
 		c.JSON(consts.StatusUnauthorized, post.CreatePostResp{
 			IsSuccessful: false,
@@ -94,7 +106,19 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	domain_post_instance, err := post_service.CreatePost(ctx, req.GetUserID(), req.GetSchoolID(), req.GetTitle(), req.GetContent())
+	// ✅ 使用新版 CreatePost：带 media / tags / replyTo
+	domainPost, err := post_service.CreatePost(
+		ctx,
+		req.GetUserID(),
+		req.GetSchoolID(),
+		req.GetTitle(),
+		req.GetContent(),
+		req.GetMediaType(), // string
+		req.GetMediaUrls(), // []string
+		req.Location,       // *string
+		req.GetTags(),      // []string
+		req.ReplyTo,        // *int64
+	)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, post.CreatePostResp{
 			IsSuccessful: false,
@@ -102,46 +126,92 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	thriftPost := domain.FromDomainPostToThriftPost(*domain_post_instance)
+
+	// 新版转换：domain.Post -> thrift.Post
+	thriftPost := domain.DomainPostToThrift(*domainPost)
 
 	c.JSON(consts.StatusOK, post.CreatePostResp{
 		IsSuccessful: true,
 		ErrorMessage: "",
 		Post:         &thriftPost,
 	})
-
 }
 
+//if req.content or req.title is empty, corresponding cell in db will be updated to empty string!
 // EditPost .
 // @router /post/edit [POST]
 func EditPost(ctx context.Context, c *app.RequestContext) {
-	var err error
 	var req post.EditPostReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
+	if err := c.BindAndValidate(&req); err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
+	
+	if req.GetTitle() == "" || req.GetContent() == "" {
+		c.JSON(consts.StatusBadRequest, post.EditPostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Title or Content cannot be empty",
+		})
+		return
+	}
+	
+	// jwt
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, user_id, err := auth_service.ParseUserJWT(ctx, jwtStr)
+	if err != nil {
+		c.JSON(consts.StatusUnauthorized, post.EditPostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Error parsing JWT: " + err.Error(),
+		})
+		return
+	}
+	if exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, post.EditPostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Authentification info expired, please login again",
+		})
+		return
+	}
 
-	resp := new(post.EditPostResp)
+	updatedPost, err := post_service.EditPost(
+		ctx,
+		user_id,
+		req.GetID(),
+		req.GetTitle(),
+		req.GetContent(),
+	)
+	if err != nil {
+		status := consts.StatusInternalServerError
+		if errors.Is(err, gorm.ErrRecordNotFound) {
+			status = consts.StatusNotFound
+		}
+		c.JSON(status, post.EditPostResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
 
-	c.JSON(consts.StatusOK, resp)
+	thriftPost := domain.DomainPostToThrift(*updatedPost)
+	c.JSON(consts.StatusOK, post.EditPostResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		Post:         &thriftPost,
+	})
 }
 
 // DeletePost .
 // @router /post/delete [POST]
 func DeletePost(ctx context.Context, c *app.RequestContext) {
-	var err error
 	var req post.DeletePostReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
+	if err := c.BindAndValidate(&req); err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
 
 	fmt.Println("Entered DeletePost", req.GetID())
-	JWT := string(c.Cookie("JWT"))
-	_, _, _, exp, userID, err := auth_service.ParseUserJWT(ctx, JWT)
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, userID, err := auth_service.ParseUserJWT(ctx, jwtStr)
 	if err != nil {
 		c.JSON(consts.StatusUnauthorized, post.DeletePostResp{
 			IsSuccessful: false,
@@ -177,21 +247,56 @@ func DeletePost(ctx context.Context, c *app.RequestContext) {
 		IsSuccessful: true,
 		ErrorMessage: "",
 	})
-
 }
 
 // GetSchoolRecentPosts .
 // @router /post/school/recent [GET]
 func GetSchoolRecentPosts(ctx context.Context, c *app.RequestContext) {
-	var err error
 	var req post.GetSchoolRecentPostsReq
-	err = c.BindAndValidate(&req)
-	if err != nil {
+	if err := c.BindAndValidate(&req); err != nil {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
 
-	resp := new(post.GetSchoolRecentPostsResp)
+	if req.Limit == 0 {
+		req.Limit = 10
+	}
+
+	// viewer（用于 is_liked_by_user / is_fav_by_user）
+	viewerID := int64(-1)
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, id, err := auth_service.ParseUserJWT(ctx, jwtStr)
+	if err == nil && exp > time.Now().Unix() {
+		viewerID = id
+	}
+
+	posts, err := post_service.GetSchoolRecentPostsWithStats(
+		ctx,
+		req.SchoolID,
+		viewerID,
+		req.Before,
+		int(req.Limit),
+	)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, post.GetSchoolRecentPostsResp{
+			IsSuccessful: false,
+			ErrorMessage: "Failed to fetch posts: " + err.Error(),
+			Posts:        nil,
+		})
+		return
+	}
+
+	thriftPosts := domain.DomainPostListToThrift(posts)
+	thriftPostPointers := make([]*post.Post, len(thriftPosts))
+	for i := range thriftPosts {
+		thriftPostPointers[i] = &thriftPosts[i]
+	}
+
+	resp := post.GetSchoolRecentPostsResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		Posts:        thriftPostPointers,
+	}
 
 	c.JSON(consts.StatusOK, resp)
 }
@@ -199,7 +304,6 @@ func GetSchoolRecentPosts(ctx context.Context, c *app.RequestContext) {
 // GetPersonalRecentPosts
 // @router /post/personal [GET]
 func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
-
 	var req post.GetPersonalRecentPostsReq
 
 	if err := c.BindAndValidate(&req); err != nil {
@@ -214,6 +318,7 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 	if req.Limit == 0 {
 		req.Limit = 10 // default limit
 	}
+
 	// get viewer from JWT
 	viewerID := int64(-1)
 	jwtStr := string(c.Cookie("JWT"))
@@ -222,7 +327,7 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		viewerID = id
 	}
 
-	postsWithStats, err := post_service.GetPersonalRecentPostsWithStats(
+	posts, err := post_service.GetPersonalRecentPostsWithStats(
 		ctx,
 		req.UserID,
 		viewerID,
@@ -238,8 +343,8 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// convert []domain.PostWithStats -> []thrift.Post
-	thriftPosts := domain.FromPostWithStatsListToThriftPostList(postsWithStats)
+	// 新版：[]domain.Post -> []thrift.Post
+	thriftPosts := domain.DomainPostListToThrift(posts)
 	thriftPostPointers := make([]*post.Post, len(thriftPosts))
 	for i := range thriftPosts {
 		thriftPostPointers[i] = &thriftPosts[i]

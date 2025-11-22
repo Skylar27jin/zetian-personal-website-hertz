@@ -1,4 +1,4 @@
-package post_repo
+package post_base_repo
 
 import (
 	"context"
@@ -17,9 +17,6 @@ This repo handles ONLY the post_base table.
 Stats operations should go to PostStatsRepo.
 */
 
-// -----------------------------------------------------------------------------
-// Create
-// -----------------------------------------------------------------------------
 
 // CreatePostBase inserts a new PostBase record.
 // Note: stats row must be filled separately (via PostStatsRepo.CreateEmpty).
@@ -27,9 +24,6 @@ func CreatePostBase(ctx context.Context, base *domain.PostBase) error {
 	return DB.DB.WithContext(ctx).Create(base).Error
 }
 
-// -----------------------------------------------------------------------------
-// Query
-// -----------------------------------------------------------------------------
 
 // GetPostBaseByID returns the base post row.
 // No stats included.
@@ -42,9 +36,6 @@ func GetPostBaseByID(ctx context.Context, id int64) (*domain.PostBase, error) {
 	return &base, nil
 }
 
-// -----------------------------------------------------------------------------
-// Update
-// -----------------------------------------------------------------------------
 
 // UpdatePostBase ensures only the owner can update title/content.
 // UpdatedAt will auto-update via gorm hook.
@@ -58,12 +49,9 @@ func UpdatePostBase(ctx context.Context, userID, postID int64, title, content st
 		}).Error
 }
 
-// -----------------------------------------------------------------------------
-// Delete
-// -----------------------------------------------------------------------------
 
 // DeletePostBase deletes a post only if owner matches.
-// Note: post_stats row will be auto-deleted (ON DELETE CASCADE).
+// Note: post_stats row will be AUTO-deleted (ON DELETE CASCADE).
 func DeletePostBase(ctx context.Context, userID, postID int64) error {
 	tx := DB.DB.WithContext(ctx).
 		Where("id = ? AND user_id = ?", postID, userID).

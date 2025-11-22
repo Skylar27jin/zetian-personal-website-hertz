@@ -40,7 +40,7 @@ struct GetPostByIDReq {
 struct GetPostByIDResp {
     1: bool isSuccessful;
     2: string errorMessage;
-    3: Post post;
+    3: optional Post post;
 }
 
 //create------------------------------------------------------------
@@ -48,7 +48,13 @@ struct CreatePostReq {
     1: i64 user_id,
     2: i64 school_id,
     3: string title,
-    4: string content
+    4: string content,
+
+    5: optional string location,
+    6: optional list<string> tags,
+    7: optional string media_type,    // 允许前端不传，后端默认 "text"
+    8: optional list<string> media_urls,
+    9: optional i64 reply_to,
 }
 
 struct CreatePostResp {
@@ -57,11 +63,12 @@ struct CreatePostResp {
     3: Post post;
 }
 
+
 //edit--------------------------------------------------------------
 struct EditPostReq {
     1: i64 id;
     2: optional string title;
-    3: optional string conten;
+    3: optional string content;
 }
 
 struct EditPostResp {
@@ -106,22 +113,17 @@ struct GetPersonalRecentPostsResp {
 }
 
 struct LikePostReq {
-    1: i64 user_id;
-    2: i64 post_id;
+    1: i64 post_id;
 }
 struct FavPostReq {
-    1: i64 user_id;
-    2: i64 post_id;
+    1: i64 post_id;
 }
 struct UnlikePostReq {
-    1: i64 user_id;
-    2: i64 post_id;
+    1: i64 post_id;
 }
 struct UnfavPostReq {
-    1: i64 user_id;
-    2: i64 post_id;
+    1: i64 post_id;
 }
-
 
 struct UserFlagPostResq {
     1: bool isSuccessful;

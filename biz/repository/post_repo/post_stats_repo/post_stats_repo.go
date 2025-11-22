@@ -32,15 +32,16 @@ func CreateEmptyStats(ctx context.Context, postID int64) error {
 
 // GetStats retrieves a PostStats row by post_id.
 func GetStats(ctx context.Context, postID int64) (*domain.PostStats, error) {
-	var stats domain.PostStats
-	err := DB.DB.WithContext(ctx).
-		First(&stats, "post_id = ?", postID).Error
-
-	if err != nil {
-		return nil, err
-	}
-	return &stats, nil
+    var stats domain.PostStats
+    err := DB.DB.WithContext(ctx).
+        Where("post_id = ?", postID).
+        Take(&stats).Error   // <-- 用 Take，避免 ORDER BY
+    if err != nil {
+        return nil, err
+    }
+    return &stats, nil
 }
+
 
 // -----------------------------------------------------------------------------
 // Update

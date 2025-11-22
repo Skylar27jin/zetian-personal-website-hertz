@@ -1338,7 +1338,7 @@ func (p *GetPostByIDReq) String() string {
 type GetPostByIDResp struct {
 	IsSuccessful bool   `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
 	ErrorMessage string `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
-	Post         *Post  `thrift:"post,3" form:"post" json:"post" query:"post"`
+	Post         *Post  `thrift:"post,3,optional" form:"post" json:"post,omitempty" query:"post"`
 }
 
 func NewGetPostByIDResp() *GetPostByIDResp {
@@ -1549,14 +1549,16 @@ WriteFieldEndError:
 }
 
 func (p *GetPostByIDResp) writeField3(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("post", thrift.STRUCT, 3); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := p.Post.Write(oprot); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
+	if p.IsSetPost() {
+		if err = oprot.WriteFieldBegin("post", thrift.STRUCT, 3); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := p.Post.Write(oprot); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
 	}
 	return nil
 WriteFieldBeginError:
@@ -1575,10 +1577,16 @@ func (p *GetPostByIDResp) String() string {
 
 // create------------------------------------------------------------
 type CreatePostReq struct {
-	UserID   int64  `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
-	SchoolID int64  `thrift:"school_id,2" form:"school_id" json:"school_id" query:"school_id"`
-	Title    string `thrift:"title,3" form:"title" json:"title" query:"title"`
-	Content  string `thrift:"content,4" form:"content" json:"content" query:"content"`
+	UserID   int64    `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
+	SchoolID int64    `thrift:"school_id,2" form:"school_id" json:"school_id" query:"school_id"`
+	Title    string   `thrift:"title,3" form:"title" json:"title" query:"title"`
+	Content  string   `thrift:"content,4" form:"content" json:"content" query:"content"`
+	Location *string  `thrift:"location,5,optional" form:"location" json:"location,omitempty" query:"location"`
+	Tags     []string `thrift:"tags,6,optional,list<string>" form:"tags" json:"tags,omitempty" query:"tags"`
+	// 允许前端不传，后端默认 "text"
+	MediaType *string  `thrift:"media_type,7,optional" form:"media_type" json:"media_type,omitempty" query:"media_type"`
+	MediaUrls []string `thrift:"media_urls,8,optional,list<string>" form:"media_urls" json:"media_urls,omitempty" query:"media_urls"`
+	ReplyTo   *int64   `thrift:"reply_to,9,optional" form:"reply_to" json:"reply_to,omitempty" query:"reply_to"`
 }
 
 func NewCreatePostReq() *CreatePostReq {
@@ -1604,11 +1612,81 @@ func (p *CreatePostReq) GetContent() (v string) {
 	return p.Content
 }
 
+var CreatePostReq_Location_DEFAULT string
+
+func (p *CreatePostReq) GetLocation() (v string) {
+	if !p.IsSetLocation() {
+		return CreatePostReq_Location_DEFAULT
+	}
+	return *p.Location
+}
+
+var CreatePostReq_Tags_DEFAULT []string
+
+func (p *CreatePostReq) GetTags() (v []string) {
+	if !p.IsSetTags() {
+		return CreatePostReq_Tags_DEFAULT
+	}
+	return p.Tags
+}
+
+var CreatePostReq_MediaType_DEFAULT string
+
+func (p *CreatePostReq) GetMediaType() (v string) {
+	if !p.IsSetMediaType() {
+		return CreatePostReq_MediaType_DEFAULT
+	}
+	return *p.MediaType
+}
+
+var CreatePostReq_MediaUrls_DEFAULT []string
+
+func (p *CreatePostReq) GetMediaUrls() (v []string) {
+	if !p.IsSetMediaUrls() {
+		return CreatePostReq_MediaUrls_DEFAULT
+	}
+	return p.MediaUrls
+}
+
+var CreatePostReq_ReplyTo_DEFAULT int64
+
+func (p *CreatePostReq) GetReplyTo() (v int64) {
+	if !p.IsSetReplyTo() {
+		return CreatePostReq_ReplyTo_DEFAULT
+	}
+	return *p.ReplyTo
+}
+
 var fieldIDToName_CreatePostReq = map[int16]string{
 	1: "user_id",
 	2: "school_id",
 	3: "title",
 	4: "content",
+	5: "location",
+	6: "tags",
+	7: "media_type",
+	8: "media_urls",
+	9: "reply_to",
+}
+
+func (p *CreatePostReq) IsSetLocation() bool {
+	return p.Location != nil
+}
+
+func (p *CreatePostReq) IsSetTags() bool {
+	return p.Tags != nil
+}
+
+func (p *CreatePostReq) IsSetMediaType() bool {
+	return p.MediaType != nil
+}
+
+func (p *CreatePostReq) IsSetMediaUrls() bool {
+	return p.MediaUrls != nil
+}
+
+func (p *CreatePostReq) IsSetReplyTo() bool {
+	return p.ReplyTo != nil
 }
 
 func (p *CreatePostReq) Read(iprot thrift.TProtocol) (err error) {
@@ -1657,6 +1735,46 @@ func (p *CreatePostReq) Read(iprot thrift.TProtocol) (err error) {
 		case 4:
 			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField4(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 5:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField5(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 6:
+			if fieldTypeId == thrift.LIST {
+				if err = p.ReadField6(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 7:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField7(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 8:
+			if fieldTypeId == thrift.LIST {
+				if err = p.ReadField8(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 9:
+			if fieldTypeId == thrift.I64 {
+				if err = p.ReadField9(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -1735,6 +1853,85 @@ func (p *CreatePostReq) ReadField4(iprot thrift.TProtocol) error {
 	p.Content = _field
 	return nil
 }
+func (p *CreatePostReq) ReadField5(iprot thrift.TProtocol) error {
+
+	var _field *string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = &v
+	}
+	p.Location = _field
+	return nil
+}
+func (p *CreatePostReq) ReadField6(iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin()
+	if err != nil {
+		return err
+	}
+	_field := make([]string, 0, size)
+	for i := 0; i < size; i++ {
+
+		var _elem string
+		if v, err := iprot.ReadString(); err != nil {
+			return err
+		} else {
+			_elem = v
+		}
+
+		_field = append(_field, _elem)
+	}
+	if err := iprot.ReadListEnd(); err != nil {
+		return err
+	}
+	p.Tags = _field
+	return nil
+}
+func (p *CreatePostReq) ReadField7(iprot thrift.TProtocol) error {
+
+	var _field *string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = &v
+	}
+	p.MediaType = _field
+	return nil
+}
+func (p *CreatePostReq) ReadField8(iprot thrift.TProtocol) error {
+	_, size, err := iprot.ReadListBegin()
+	if err != nil {
+		return err
+	}
+	_field := make([]string, 0, size)
+	for i := 0; i < size; i++ {
+
+		var _elem string
+		if v, err := iprot.ReadString(); err != nil {
+			return err
+		} else {
+			_elem = v
+		}
+
+		_field = append(_field, _elem)
+	}
+	if err := iprot.ReadListEnd(); err != nil {
+		return err
+	}
+	p.MediaUrls = _field
+	return nil
+}
+func (p *CreatePostReq) ReadField9(iprot thrift.TProtocol) error {
+
+	var _field *int64
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		_field = &v
+	}
+	p.ReplyTo = _field
+	return nil
+}
 
 func (p *CreatePostReq) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
@@ -1756,6 +1953,26 @@ func (p *CreatePostReq) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField4(oprot); err != nil {
 			fieldId = 4
+			goto WriteFieldError
+		}
+		if err = p.writeField5(oprot); err != nil {
+			fieldId = 5
+			goto WriteFieldError
+		}
+		if err = p.writeField6(oprot); err != nil {
+			fieldId = 6
+			goto WriteFieldError
+		}
+		if err = p.writeField7(oprot); err != nil {
+			fieldId = 7
+			goto WriteFieldError
+		}
+		if err = p.writeField8(oprot); err != nil {
+			fieldId = 8
+			goto WriteFieldError
+		}
+		if err = p.writeField9(oprot); err != nil {
+			fieldId = 9
 			goto WriteFieldError
 		}
 	}
@@ -1842,6 +2059,117 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
+}
+
+func (p *CreatePostReq) writeField5(oprot thrift.TProtocol) (err error) {
+	if p.IsSetLocation() {
+		if err = oprot.WriteFieldBegin("location", thrift.STRING, 5); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.Location); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
+}
+
+func (p *CreatePostReq) writeField6(oprot thrift.TProtocol) (err error) {
+	if p.IsSetTags() {
+		if err = oprot.WriteFieldBegin("tags", thrift.LIST, 6); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteListBegin(thrift.STRING, len(p.Tags)); err != nil {
+			return err
+		}
+		for _, v := range p.Tags {
+			if err := oprot.WriteString(v); err != nil {
+				return err
+			}
+		}
+		if err := oprot.WriteListEnd(); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 6 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
+}
+
+func (p *CreatePostReq) writeField7(oprot thrift.TProtocol) (err error) {
+	if p.IsSetMediaType() {
+		if err = oprot.WriteFieldBegin("media_type", thrift.STRING, 7); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.MediaType); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 7 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
+}
+
+func (p *CreatePostReq) writeField8(oprot thrift.TProtocol) (err error) {
+	if p.IsSetMediaUrls() {
+		if err = oprot.WriteFieldBegin("media_urls", thrift.LIST, 8); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteListBegin(thrift.STRING, len(p.MediaUrls)); err != nil {
+			return err
+		}
+		for _, v := range p.MediaUrls {
+			if err := oprot.WriteString(v); err != nil {
+				return err
+			}
+		}
+		if err := oprot.WriteListEnd(); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 8 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
+}
+
+func (p *CreatePostReq) writeField9(oprot thrift.TProtocol) (err error) {
+	if p.IsSetReplyTo() {
+		if err = oprot.WriteFieldBegin("reply_to", thrift.I64, 9); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteI64(*p.ReplyTo); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 9 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
 func (p *CreatePostReq) String() string {
@@ -2092,9 +2420,9 @@ func (p *CreatePostResp) String() string {
 
 // edit--------------------------------------------------------------
 type EditPostReq struct {
-	ID     int64   `thrift:"id,1" form:"id" json:"id" query:"id"`
-	Title  *string `thrift:"title,2,optional" form:"title" json:"title,omitempty" query:"title"`
-	Conten *string `thrift:"conten,3,optional" form:"conten" json:"conten,omitempty" query:"conten"`
+	ID      int64   `thrift:"id,1" form:"id" json:"id" query:"id"`
+	Title   *string `thrift:"title,2,optional" form:"title" json:"title,omitempty" query:"title"`
+	Content *string `thrift:"content,3,optional" form:"content" json:"content,omitempty" query:"content"`
 }
 
 func NewEditPostReq() *EditPostReq {
@@ -2117,27 +2445,27 @@ func (p *EditPostReq) GetTitle() (v string) {
 	return *p.Title
 }
 
-var EditPostReq_Conten_DEFAULT string
+var EditPostReq_Content_DEFAULT string
 
-func (p *EditPostReq) GetConten() (v string) {
-	if !p.IsSetConten() {
-		return EditPostReq_Conten_DEFAULT
+func (p *EditPostReq) GetContent() (v string) {
+	if !p.IsSetContent() {
+		return EditPostReq_Content_DEFAULT
 	}
-	return *p.Conten
+	return *p.Content
 }
 
 var fieldIDToName_EditPostReq = map[int16]string{
 	1: "id",
 	2: "title",
-	3: "conten",
+	3: "content",
 }
 
 func (p *EditPostReq) IsSetTitle() bool {
 	return p.Title != nil
 }
 
-func (p *EditPostReq) IsSetConten() bool {
-	return p.Conten != nil
+func (p *EditPostReq) IsSetContent() bool {
+	return p.Content != nil
 }
 
 func (p *EditPostReq) Read(iprot thrift.TProtocol) (err error) {
@@ -2242,7 +2570,7 @@ func (p *EditPostReq) ReadField3(iprot thrift.TProtocol) error {
 	} else {
 		_field = &v
 	}
-	p.Conten = _field
+	p.Content = _field
 	return nil
 }
 
@@ -2319,11 +2647,11 @@ WriteFieldEndError:
 }
 
 func (p *EditPostReq) writeField3(oprot thrift.TProtocol) (err error) {
-	if p.IsSetConten() {
-		if err = oprot.WriteFieldBegin("conten", thrift.STRING, 3); err != nil {
+	if p.IsSetContent() {
+		if err = oprot.WriteFieldBegin("content", thrift.STRING, 3); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.Conten); err != nil {
+		if err := oprot.WriteString(*p.Content); err != nil {
 			return err
 		}
 		if err = oprot.WriteFieldEnd(); err != nil {
@@ -3927,8 +4255,7 @@ func (p *GetPersonalRecentPostsResp) String() string {
 }
 
 type LikePostReq struct {
-	UserID int64 `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
-	PostID int64 `thrift:"post_id,2" form:"post_id" json:"post_id" query:"post_id"`
+	PostID int64 `thrift:"post_id,1" form:"post_id" json:"post_id" query:"post_id"`
 }
 
 func NewLikePostReq() *LikePostReq {
@@ -3938,17 +4265,12 @@ func NewLikePostReq() *LikePostReq {
 func (p *LikePostReq) InitDefault() {
 }
 
-func (p *LikePostReq) GetUserID() (v int64) {
-	return p.UserID
-}
-
 func (p *LikePostReq) GetPostID() (v int64) {
 	return p.PostID
 }
 
 var fieldIDToName_LikePostReq = map[int16]string{
-	1: "user_id",
-	2: "post_id",
+	1: "post_id",
 }
 
 func (p *LikePostReq) Read(iprot thrift.TProtocol) (err error) {
@@ -3973,14 +4295,6 @@ func (p *LikePostReq) Read(iprot thrift.TProtocol) (err error) {
 		case 1:
 			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField1(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 2:
-			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -4023,17 +4337,6 @@ func (p *LikePostReq) ReadField1(iprot thrift.TProtocol) error {
 	} else {
 		_field = v
 	}
-	p.UserID = _field
-	return nil
-}
-func (p *LikePostReq) ReadField2(iprot thrift.TProtocol) error {
-
-	var _field int64
-	if v, err := iprot.ReadI64(); err != nil {
-		return err
-	} else {
-		_field = v
-	}
 	p.PostID = _field
 	return nil
 }
@@ -4046,10 +4349,6 @@ func (p *LikePostReq) Write(oprot thrift.TProtocol) (err error) {
 	if p != nil {
 		if err = p.writeField1(oprot); err != nil {
 			fieldId = 1
-			goto WriteFieldError
-		}
-		if err = p.writeField2(oprot); err != nil {
-			fieldId = 2
 			goto WriteFieldError
 		}
 	}
@@ -4071,10 +4370,10 @@ WriteStructEndError:
 }
 
 func (p *LikePostReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.UserID); err != nil {
+	if err := oprot.WriteI64(p.PostID); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -4087,23 +4386,6 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *LikePostReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.PostID); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
-}
-
 func (p *LikePostReq) String() string {
 	if p == nil {
 		return "<nil>"
@@ -4113,8 +4395,7 @@ func (p *LikePostReq) String() string {
 }
 
 type FavPostReq struct {
-	UserID int64 `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
-	PostID int64 `thrift:"post_id,2" form:"post_id" json:"post_id" query:"post_id"`
+	PostID int64 `thrift:"post_id,1" form:"post_id" json:"post_id" query:"post_id"`
 }
 
 func NewFavPostReq() *FavPostReq {
@@ -4124,17 +4405,12 @@ func NewFavPostReq() *FavPostReq {
 func (p *FavPostReq) InitDefault() {
 }
 
-func (p *FavPostReq) GetUserID() (v int64) {
-	return p.UserID
-}
-
 func (p *FavPostReq) GetPostID() (v int64) {
 	return p.PostID
 }
 
 var fieldIDToName_FavPostReq = map[int16]string{
-	1: "user_id",
-	2: "post_id",
+	1: "post_id",
 }
 
 func (p *FavPostReq) Read(iprot thrift.TProtocol) (err error) {
@@ -4159,14 +4435,6 @@ func (p *FavPostReq) Read(iprot thrift.TProtocol) (err error) {
 		case 1:
 			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField1(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 2:
-			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -4209,17 +4477,6 @@ func (p *FavPostReq) ReadField1(iprot thrift.TProtocol) error {
 	} else {
 		_field = v
 	}
-	p.UserID = _field
-	return nil
-}
-func (p *FavPostReq) ReadField2(iprot thrift.TProtocol) error {
-
-	var _field int64
-	if v, err := iprot.ReadI64(); err != nil {
-		return err
-	} else {
-		_field = v
-	}
 	p.PostID = _field
 	return nil
 }
@@ -4232,10 +4489,6 @@ func (p *FavPostReq) Write(oprot thrift.TProtocol) (err error) {
 	if p != nil {
 		if err = p.writeField1(oprot); err != nil {
 			fieldId = 1
-			goto WriteFieldError
-		}
-		if err = p.writeField2(oprot); err != nil {
-			fieldId = 2
 			goto WriteFieldError
 		}
 	}
@@ -4257,10 +4510,10 @@ WriteStructEndError:
 }
 
 func (p *FavPostReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.UserID); err != nil {
+	if err := oprot.WriteI64(p.PostID); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -4273,23 +4526,6 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *FavPostReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.PostID); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
-}
-
 func (p *FavPostReq) String() string {
 	if p == nil {
 		return "<nil>"
@@ -4299,8 +4535,7 @@ func (p *FavPostReq) String() string {
 }
 
 type UnlikePostReq struct {
-	UserID int64 `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
-	PostID int64 `thrift:"post_id,2" form:"post_id" json:"post_id" query:"post_id"`
+	PostID int64 `thrift:"post_id,1" form:"post_id" json:"post_id" query:"post_id"`
 }
 
 func NewUnlikePostReq() *UnlikePostReq {
@@ -4310,17 +4545,12 @@ func NewUnlikePostReq() *UnlikePostReq {
 func (p *UnlikePostReq) InitDefault() {
 }
 
-func (p *UnlikePostReq) GetUserID() (v int64) {
-	return p.UserID
-}
-
 func (p *UnlikePostReq) GetPostID() (v int64) {
 	return p.PostID
 }
 
 var fieldIDToName_UnlikePostReq = map[int16]string{
-	1: "user_id",
-	2: "post_id",
+	1: "post_id",
 }
 
 func (p *UnlikePostReq) Read(iprot thrift.TProtocol) (err error) {
@@ -4345,14 +4575,6 @@ func (p *UnlikePostReq) Read(iprot thrift.TProtocol) (err error) {
 		case 1:
 			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField1(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 2:
-			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -4395,17 +4617,6 @@ func (p *UnlikePostReq) ReadField1(iprot thrift.TProtocol) error {
 	} else {
 		_field = v
 	}
-	p.UserID = _field
-	return nil
-}
-func (p *UnlikePostReq) ReadField2(iprot thrift.TProtocol) error {
-
-	var _field int64
-	if v, err := iprot.ReadI64(); err != nil {
-		return err
-	} else {
-		_field = v
-	}
 	p.PostID = _field
 	return nil
 }
@@ -4418,10 +4629,6 @@ func (p *UnlikePostReq) Write(oprot thrift.TProtocol) (err error) {
 	if p != nil {
 		if err = p.writeField1(oprot); err != nil {
 			fieldId = 1
-			goto WriteFieldError
-		}
-		if err = p.writeField2(oprot); err != nil {
-			fieldId = 2
 			goto WriteFieldError
 		}
 	}
@@ -4443,10 +4650,10 @@ WriteStructEndError:
 }
 
 func (p *UnlikePostReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 1); err != nil {
+	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 1); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteI64(p.UserID); err != nil {
+	if err := oprot.WriteI64(p.PostID); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -4459,23 +4666,6 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *UnlikePostReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 2); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.PostID); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
-}
-
 func (p *UnlikePostReq) String() string {
 	if p == nil {
 		return "<nil>"
@@ -4485,8 +4675,7 @@ func (p *UnlikePostReq) String() string {
 }
 
 type UnfavPostReq struct {
-	UserID int64 `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
-	PostID int64 `thrift:"post_id,2" form:"post_id" json:"post_id" query:"post_id"`
+	PostID int64 `thrift:"post_id,1" form:"post_id" json:"post_id" query:"post_id"`
 }
 
 func NewUnfavPostReq() *UnfavPostReq {
@@ -4496,17 +4685,12 @@ func NewUnfavPostReq() *UnfavPostReq {
 func (p *UnfavPostReq) InitDefault() {
 }
 
-func (p *UnfavPostReq) GetUserID() (v int64) {
-	return p.UserID
-}
-
 func (p *UnfavPostReq) GetPostID() (v int64) {
 	return p.PostID
 }
 
 var fieldIDToName_UnfavPostReq = map[int16]string{
-	1: "user_id",
-	2: "post_id",
+	1: "post_id",
 }
 
 func (p *UnfavPostReq) Read(iprot thrift.TProtocol) (err error) {
@@ -4531,14 +4715,6 @@ func (p *UnfavPostReq) Read(iprot thrift.TProtocol) (err error) {
 		case 1:
 			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField1(iprot); err != nil {
-					goto ReadFieldError
-				}
-			} else if err = iprot.Skip(fieldTypeId); err != nil {
-				goto SkipFieldError
-			}
-		case 2:
-			if fieldTypeId == thrift.I64 {
-				if err = p.ReadField2(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -4581,17 +4757,6 @@ func (p *UnfavPostReq) ReadField1(iprot thrift.TProtocol) error {
 	} else {
 		_field = v
 	}
-	p.UserID = _field
-	return nil
-}
-func (p *UnfavPostReq) ReadField2(iprot thrift.TProtocol) error {
-
-	var _field int64
-	if v, err := iprot.ReadI64(); err != nil {
-		return err
-	} else {
-		_field = v
-	}
 	p.PostID = _field
 	return nil
 }
@@ -4604,10 +4769,6 @@ func (p *UnfavPostReq) Write(oprot thrift.TProtocol) (err error) {
 	if p != nil {
 		if err = p.writeField1(oprot); err != nil {
 			fieldId = 1
-			goto WriteFieldError
-		}
-		if err = p.writeField2(oprot); err != nil {
-			fieldId = 2
 			goto WriteFieldError
 		}
 	}
@@ -4629,24 +4790,7 @@ WriteStructEndError:
 }
 
 func (p *UnfavPostReq) writeField1(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("user_id", thrift.I64, 1); err != nil {
-		goto WriteFieldBeginError
-	}
-	if err := oprot.WriteI64(p.UserID); err != nil {
-		return err
-	}
-	if err = oprot.WriteFieldEnd(); err != nil {
-		goto WriteFieldEndError
-	}
-	return nil
-WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
-WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
-}
-
-func (p *UnfavPostReq) writeField2(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 2); err != nil {
+	if err = oprot.WriteFieldBegin("post_id", thrift.I64, 1); err != nil {
 		goto WriteFieldBeginError
 	}
 	if err := oprot.WriteI64(p.PostID); err != nil {
@@ -4657,9 +4801,9 @@ func (p *UnfavPostReq) writeField2(oprot thrift.TProtocol) (err error) {
 	}
 	return nil
 WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 begin error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 begin error: ", p), err)
 WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
 func (p *UnfavPostReq) String() string {
