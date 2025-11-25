@@ -11,6 +11,7 @@ service UserService {
     user.SignUpResp SignUp(1: user.SignUpReq request) (api.post="/signup");
     user.LogoutResp Logout(1: user.LogoutReq request) (api.post="logout");
     user.GetUserResp GetUser(1: user.GetUserReq request) (api.get="/user/get");
+    user.ResetPasswordResp ResetPassword(1: user.ResetPasswordReq request) (api.post="/user/reset-password");
 }
 
 service NumberOperationService {

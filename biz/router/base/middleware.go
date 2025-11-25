@@ -140,3 +140,8 @@ func _getallschoolsMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _resetpasswordMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

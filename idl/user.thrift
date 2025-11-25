@@ -29,7 +29,6 @@ struct SignUpResp {
 
 
 struct LogoutReq {
-
 }
 
 struct LogoutResp {
@@ -51,4 +50,15 @@ struct GetUserResp {
     2: string errorMessage;
     3: string userName;
     4: i64    id;
+}
+
+
+struct ResetPasswordReq {
+    1: string email (api.body="email");
+    2: string newPassword (api.body="new_password");
+}
+
+struct ResetPasswordResp {
+    1: bool isSuccessful;
+    2: string errorMessage;
 }

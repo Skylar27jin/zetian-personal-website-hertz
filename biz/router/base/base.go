@@ -45,6 +45,7 @@ func Register(r *server.Hertz) {
 	{
 		_user := root.Group("/user", _userMw()...)
 		_user.GET("/get", append(_getuserMw(), base.GetUser)...)
+		_user.POST("/reset-password", append(_resetpasswordMw(), base.ResetPassword)...)
 	}
 	{
 		_verification := root.Group("/verification", _verificationMw()...)

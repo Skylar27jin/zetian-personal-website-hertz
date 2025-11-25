@@ -220,3 +220,63 @@ func Logout(ctx context.Context, c *app.RequestContext) {
 		ErrorMessage: "",
 	})
 }
+
+// ResetPassword .
+// @router /user/reset-password [POST]
+func ResetPassword(ctx context.Context, c *app.RequestContext) {
+	var err error
+	var req user.ResetPasswordReq
+	err = c.BindAndValidate(&req)
+	if err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	veriEmailJWT := string(c.Cookie("VeriEmailJWT"))
+
+	//verify whether the user has the veriEmail to signUp
+	email, veriEmailExp, err := authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
+	if err != nil {
+		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error() + ", Please get verification code first",
+		})
+		return
+	}
+	if email != req.GetEmail() {
+		//it means the user is copy pasting JWT from others' which is a hacking behavior
+		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+			IsSuccessful: false,
+			ErrorMessage: "Action Unauthorized",
+		})
+		clearVeriEmailCookie(c)
+		return
+	}
+	if veriEmailExp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+			IsSuccessful: false,
+			ErrorMessage: "The verification code has expired, get a new code first",
+		})
+		return
+	}
+
+	err = userService.SignUp(ctx, req.GetUsername(), req.GetPassword(), req.GetEmail())
+
+	if err != nil {
+		c.JSON(consts.StatusBadRequest, user.SignUpResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	c.JSON(consts.StatusOK, user.SignUpResp{
+		IsSuccessful: true,
+		UserName:     req.GetUsername(),
+		Email:        req.GetEmail(),
+	})
+	//clear the veriEmailJWT, disabling user's ability to modify email
+	clearVeriEmailCookie(c)
+
+
+}
