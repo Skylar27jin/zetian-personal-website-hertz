@@ -52,6 +52,12 @@ then set up IAM locally(ask zetian for more details)
 aws configure
 ```
 
+
+test connectivity
+```
+aws sts get-caller-identity
+```
+
 # How to call hertz:
 Test Locally
 ```

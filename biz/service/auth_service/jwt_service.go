@@ -107,7 +107,7 @@ payload:
 "exp": now + validDuration in unix
 }
 */
-func GenerateVeriEmailJWT(ctx context.Context, now int64, email string, validDuration int64) (string, error) {
+func GenerateVeriEmailJWT(ctx context.Context, now int64, email, purpose string, validDuration int64) (string, error) {
 	if email == "" {
 		return "", fmt.Errorf("email cannot be empty")
 	}
@@ -115,11 +115,12 @@ func GenerateVeriEmailJWT(ctx context.Context, now int64, email string, validDur
 		now = time.Now().Unix()
 	}
 	if validDuration == -1 {
-		validDuration = 15 * 60 //default 15min
+		validDuration = 3 * 60 //default 3min
 	}
 	payLoad := map[string]interface{}{
 		"email": email,
 		"exp": now + validDuration,
+		"purpose": purpose,
 	}
 
 
@@ -144,26 +145,27 @@ take in JWT like:
 returns email and exp
 
 */
-func ParseVeriEmailJWT(ctx context.Context, tokenString string) (string, int64, error) {
+func ParseVeriEmailJWT(ctx context.Context, tokenString string) (string, int64, string, error) {
 	payload, err := jwt_pkg.ParseJWT(tokenString)
 	if err != nil {
-		return "", -1, fmt.Errorf("when parsing VeriEmail JWT: %v", err)
+		return "", -1, "", fmt.Errorf("when parsing VeriEmail JWT: %v", err)
 	}
 
 	emailInterface, ok1 := payload["email"]
 	expInterface, ok2 := payload["exp"]
+	purposeInterface, ok3 := payload["purpose"]
 
 
-	if !ok1 || !ok2 {
-		return "", -2, fmt.Errorf("invalid JWT: When parsing user JWT: missing fields")
+	if !ok1 || !ok2 || !ok3 {
+		return "", -2, "", fmt.Errorf("invalid JWT: When parsing user JWT: missing fields")
 	}
 
 	exp64, err := safelyConvertToInt64(expInterface)
 	if err != nil {
-		return "", -3, err
+		return "", -3, "", err
 	}
 
-	return emailInterface.(string), exp64, nil
+	return emailInterface.(string), exp64, purposeInterface.(string), nil
 
 }
 

@@ -4,6 +4,7 @@ package base
 import (
 	"context"
 	"fmt"
+	"strings"
 	"time"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -20,7 +21,7 @@ import (
 All JWTs that are stored in cookie
 "JWT": user's basic information
 
-"VeriEmailJWT": 15min veriEmailJWT
+"VeriEmailJWT": means verification email JWT, used to verify user's email for sign up, reset password, etc.
 */
 
 // Login .
@@ -79,7 +80,7 @@ func SignUp(ctx context.Context, c *app.RequestContext) {
 	veriEmailJWT := string(c.Cookie("VeriEmailJWT"))
 
 	//verify whether the user has the veriEmail to signUp
-	email, veriEmailExp, err := authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
+	email, veriEmailExp, purpose, err := authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
 	if err != nil {
 		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
 			IsSuccessful: false,
@@ -87,8 +88,7 @@ func SignUp(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
-	if email != req.GetEmail() {
-		//it means the user is copy pasting JWT from others' which is a hacking behavior
+	if email != req.GetEmail() || strings.ToLower(purpose) != "signup" {
 		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
 			IsSuccessful: false,
 			ErrorMessage: "Action Unauthorized",
@@ -235,17 +235,17 @@ func ResetPassword(ctx context.Context, c *app.RequestContext) {
 	veriEmailJWT := string(c.Cookie("VeriEmailJWT"))
 
 	//verify whether the user has the veriEmail to signUp
-	email, veriEmailExp, err := authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
+	email, veriEmailExp, purpose, err := authService.ParseVeriEmailJWT(ctx, veriEmailJWT)
 	if err != nil {
-		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+		c.JSON(consts.StatusUnauthorized, user.ResetPasswordResp{
 			IsSuccessful: false,
 			ErrorMessage: err.Error() + ", Please get verification code first",
 		})
 		return
 	}
-	if email != req.GetEmail() {
-		//it means the user is copy pasting JWT from others' which is a hacking behavior
-		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+	if email != req.GetEmail() || strings.ToLower(purpose) != "resetpassword" {
+		//it means the user is copy pasting JWT from others or from other actions
+		c.JSON(consts.StatusUnauthorized, user.ResetPasswordResp{
 			IsSuccessful: false,
 			ErrorMessage: "Action Unauthorized",
 		})
@@ -253,30 +253,29 @@ func ResetPassword(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 	if veriEmailExp < time.Now().Unix() {
-		c.JSON(consts.StatusUnauthorized, user.SignUpResp{
+		c.JSON(consts.StatusUnauthorized, user.ResetPasswordResp{
 			IsSuccessful: false,
 			ErrorMessage: "The verification code has expired, get a new code first",
 		})
 		return
 	}
 
-	err = userService.SignUp(ctx, req.GetUsername(), req.GetPassword(), req.GetEmail())
-
+	err = userService.ResetPassword(ctx, req.GetEmail(), req.GetNewPassword())
 	if err != nil {
-		c.JSON(consts.StatusBadRequest, user.SignUpResp{
+		c.JSON(consts.StatusBadRequest, user.ResetPasswordResp{
 			IsSuccessful: false,
 			ErrorMessage: err.Error(),
 		})
 		return
 	}
 
-	c.JSON(consts.StatusOK, user.SignUpResp{
+	c.JSON(consts.StatusOK, user.ResetPasswordResp{
 		IsSuccessful: true,
-		UserName:     req.GetUsername(),
-		Email:        req.GetEmail(),
+		ErrorMessage: "",
 	})
 	//clear the veriEmailJWT, disabling user's ability to modify email
 	clearVeriEmailCookie(c)
 
 
 }
+

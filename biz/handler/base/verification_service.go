@@ -77,7 +77,7 @@ func VerifyEmailCode(ctx context.Context, c *app.RequestContext) {
 	}
 
 	//1. check if the code is correct
-	isMatch, err := auth_service.IsCodeValid(ctx, req.VerificationCode, req.Email, time.Now().Unix())
+	isMatch, purpose, err := auth_service.IsCodeValid(ctx, req.VerificationCode, req.Email, time.Now().Unix())
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, getFailedVerifyEmailCodeResp(err))
 		return
@@ -99,9 +99,8 @@ func VerifyEmailCode(ctx context.Context, c *app.RequestContext) {
 	}
 
 	//set cookie
-	token, err := auth_service.GenerateVeriEmailJWT(ctx, time.Now().Unix(), req.Email, 15*60)
+	token, err := auth_service.GenerateVeriEmailJWT(ctx, time.Now().Unix(), req.Email, purpose, 15*60)
 	if err != nil {
-		c.JSON(consts.StatusInternalServerError, getFailedVerifyEmailCodeResp(err))
 		return
 	}
 

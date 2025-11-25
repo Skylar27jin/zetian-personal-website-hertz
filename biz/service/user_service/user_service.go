@@ -84,4 +84,26 @@ func GetUserByUsername(ctx context.Context, name string) (*domain.User, error) {
 }
 
 
+func ResetPassword(ctx context.Context, email, newPassword string) error {
+	user, err := userRepo.GetUserByEmail(ctx, email)
+	if err != nil || user == nil {
+		return fmt.Errorf("email does not exist")
+	}
+
+	//encrypt the new password
+	hashedPassword, err := crypto.HashPassword(newPassword)
+	if err != nil {
+		return err
+	}
+
+	user.Password = hashedPassword
+
+	err = userRepo.UpdateUser(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}
+
 

@@ -37,16 +37,17 @@ func CreateOrUpdateCode(ctx context.Context, email, purpose, code string, now, v
 //
 // Returns:
 //   - isMatch
+//   - purpose: the purpose of the code
 //   - error: If record not found or DB error occurs.
-func IsCodeValid(ctx context.Context, code, email string, now int64) (bool, error) {
+func IsCodeValid(ctx context.Context, code, email string, now int64) (bool, string, error) {
 	instance, err := email_verification_code_repo.GetCodeByEmail(ctx, email)
 	if err != nil {
-		return false, err
+		return false, "", err
 	}
 	if now == -1 {
 		now = time.Now().Unix()
 	}
-	return code == instance.Code && email == instance.Email && now <= instance.ExpireAt, nil
+	return code == instance.Code && email == instance.Email && now <= instance.ExpireAt, instance.Purpose, nil
 }
 
 // DeleteCode removes a verification code record (e.g., after successful verification or expiration cleanup).

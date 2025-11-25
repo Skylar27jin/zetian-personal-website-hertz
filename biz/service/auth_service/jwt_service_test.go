@@ -62,7 +62,7 @@ func TestGenerateVeriEmailJWT(t *testing.T) {
 	now := time.Now().Unix()
 	validDuration := int64(15 * 60)
 
-	token, err := GenerateVeriEmailJWT(ctx, now, email, validDuration)
+	token, err := GenerateVeriEmailJWT(ctx, now, email, "111", validDuration)
 	assert.NoError(t, err, "should generate verification JWT without error")
 	assert.NotEmpty(t, token)
 }
@@ -75,14 +75,22 @@ func TestParseVeriEmailJWT(t *testing.T) {
 	expectedExp := now + validDuration
 
 	// ✅ 动态生成一个不会过期的 token
-	token, err := GenerateVeriEmailJWT(ctx, now, email, validDuration)
+	token, err := GenerateVeriEmailJWT(ctx, now, email, "111", validDuration)
 	assert.NoError(t, err)
 	assert.NotEmpty(t, token)
 	log.Println(token)
 	// ✅ 解析 token
-	emailGot, expGot, err := ParseVeriEmailJWT(ctx, token)
+	emailGot, expGot, _, err := ParseVeriEmailJWT(ctx, token)
 	assert.NoError(t, err, "should parse valid JWT correctly")
 	assert.Equal(t, email, emailGot, "email should match")
 	assert.GreaterOrEqual(t, expGot, expectedExp-5, "exp should be close to expected value")
 
+}
+
+
+func TestParseVeriEmailJWT2(t *testing.T) {
+	emailGot, _, purpose, err := ParseVeriEmailJWT(context.Background(), "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNreWppbjAxMjdAZ21haWwuY29tIiwiZXhwIjoxNzY0MDM1Nzc5fQ.hmrkYarbyvBx5uUmnoaVtZYxN8FpVQQ6_aQjA06i39E")
+	assert.NoError(t, err, "should parse valid JWT correctly")
+	assert.Equal(t, "", purpose, "purpose should match")
+	assert.Equal(t, "skyjin0127@gmail.com", emailGot, "email should match")
 }
