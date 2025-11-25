@@ -27,7 +27,6 @@ func SendVeriCodeToEmail(ctx context.Context, c *app.RequestContext) {
 		c.String(consts.StatusBadRequest, err.Error())
 		return
 	}
-
 	//1.Generate a 6 bit verification code;
 	code, err := email_service.GenerateVeriCode(6, true, false, false, false)
 	if err != nil {
@@ -45,7 +44,7 @@ func SendVeriCodeToEmail(ctx context.Context, c *app.RequestContext) {
 	}
 
 	//3. send the code to the email;
-	err = email_service.SendVeriCodeEmailTo(ctx, req.Email, req.Purpose, code)
+	err = email_service.SendVeriCodeEmailTo(ctx, req.Email, code, req.Purpose)
 	if err != nil {
 		c.JSON(consts.StatusInternalServerError, (getFailedSendVeriCodeToEmailResp(err)))
 		return
