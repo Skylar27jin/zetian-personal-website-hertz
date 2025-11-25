@@ -100,7 +100,7 @@ struct GetSchoolRecentPostsResp {
     1: bool isSuccessful;
     2: string errorMessage;
     3: list<Post> posts;
-    4: string oldestTime; //min(posts.created_at), so that frontend is able to eaisly search for the next group of posts
+    4: map<i64, Post> quoted_posts; 
 }
 
 struct GetPersonalRecentPostsReq {
@@ -113,6 +113,7 @@ struct GetPersonalRecentPostsResp {
     1: bool isSuccessful;
     2: string errorMessage;
     3: list<Post> posts;
+    4: map<i64, Post> quoted_posts; 
 }
 
 struct LikePostReq {

@@ -241,3 +241,42 @@ func DomainPostListToThrift(posts []Post) []thrift.Post {
 	}
 	return list
 }
+
+
+
+// DomainPostListToThriftPointers converts []Post → []*thrift.Post.
+//
+// 实现思路：
+//   1. 先用 DomainPostListToThrift 得到 []thrift.Post
+//   2. 再对这个切片逐个取地址，构造 []*thrift.Post
+func DomainPostListToThriftPointers(posts []Post) []*thrift.Post {
+	// 先得到值类型的列表
+	thriftList := DomainPostListToThrift(posts)
+
+	// 再构造指针切片
+	ptrs := make([]*thrift.Post, len(thriftList))
+	for i := range thriftList {
+		ptrs[i] = &thriftList[i]
+	}
+	return ptrs
+}
+
+
+// DomainPostMapToThriftPointerMap converts map[int64]Post → map[int64]*thrift.Post.
+//
+// key 保持不变（postID），value 变成对应的 *thrift.Post。
+func DomainPostMapToThriftPointerMap(m map[int64]Post) map[int64]*thrift.Post {
+	if len(m) == 0 {
+		return map[int64]*thrift.Post{}
+	}
+
+	res := make(map[int64]*thrift.Post, len(m))
+	for id, p := range m {
+		tp := DomainPostToThrift(p) // 先得到一个值类型
+		cp := tp                    // 拷贝一份，避免取循环变量地址的坑
+		res[id] = &cp
+	}
+	return res
+}
+
+

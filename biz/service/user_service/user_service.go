@@ -51,11 +51,14 @@ func SignUp(ctx context.Context,userName, password, email string) error {
 
 func Login(ctx context.Context, email, password string) (*domain.User, error) {
 	user, err := userRepo.GetUserByEmail(ctx, email)
+	fmt.Println("get user: ", user, "error", err)
 	if err != nil || user == nil {
 		return nil, fmt.Errorf("email or password is incorrect")
 	}
 
 	IspasswordMatch := crypto.CheckPassword(password, user.Password)
+
+	fmt.Println("is password match:", IspasswordMatch)
 	if !IspasswordMatch {
 		return nil, fmt.Errorf("email or password is incorrect")
 	}

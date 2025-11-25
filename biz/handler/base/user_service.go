@@ -22,6 +22,7 @@ All JWTs that are stored in cookie
 "JWT": user's basic information
 
 "VeriEmailJWT": means verification email JWT, used to verify user's email for sign up, reset password, etc.
+purpose: now we have "signup", "resetpassword", the corresponding VeriEmailJWT should only be used for that purpose.
 */
 
 // Login .
@@ -232,6 +233,7 @@ func ResetPassword(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	fmt.Println("Request to reset password for email:", req.GetEmail(), "new password:", req.GetNewPassword())
 	veriEmailJWT := string(c.Cookie("VeriEmailJWT"))
 
 	//verify whether the user has the veriEmail to signUp
@@ -275,7 +277,4 @@ func ResetPassword(ctx context.Context, c *app.RequestContext) {
 	})
 	//clear the veriEmailJWT, disabling user's ability to modify email
 	clearVeriEmailCookie(c)
-
-
 }
-

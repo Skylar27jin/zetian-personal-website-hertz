@@ -240,7 +240,7 @@ func GetPost(
 	//    - school_name
 	//    - user_name
 	//    - like/fav flags
-	posts, err := buildPostListWithStats(ctx, []domain.PostBase{*base}, viewerID)
+	posts, err := buildPostLists(ctx, []domain.PostBase{*base}, viewerID)
 	if err != nil {
 		return nil, fmt.Errorf("failed building post with stats: %w", err)
 	}
@@ -261,7 +261,7 @@ func GetPost(
 ///////////////////////////////////////////////////////////////////////////////
 
 // GetSchoolRecentPosts returns only PostBase (without stats/user flags).
-func GetSchoolRecentPosts(
+func GetSchoolRecentPostBases(
 	ctx context.Context,
 	schoolID int64,
 	beforeStr string,
@@ -277,26 +277,41 @@ func GetSchoolRecentPosts(
 
 // GetSchoolRecentPostsWithStats returns []Post with stats / school name.
 // viewerID can be -1 if you don't need IsLikedByUser / IsFavByUser.
-func GetSchoolRecentPostsWithStats(
-	ctx context.Context,
-	schoolID int64,
-	viewerID int64,
-	beforeStr string,
-	limit int,
-) ([]domain.Post, error) {
+func GetSchoolRecentPosts(
+    ctx context.Context,
+    schoolID int64,
+    viewerID int64,
+    beforeStr string,
+    limit int,
+) ([]domain.Post, map[int64]domain.Post, error) {
 
-	bases, err := GetSchoolRecentPosts(ctx, schoolID, beforeStr, limit)
-	if err != nil {
-		return nil, err
-	}
-	if len(bases) == 0 {
-		return []domain.Post{}, nil
-	}
-	return buildPostListWithStats(ctx, bases, viewerID)
+    bases, err := GetSchoolRecentPostBases(ctx, schoolID, beforeStr, limit)
+    if err != nil {
+        return nil, nil, err
+    }
+    if len(bases) == 0 {
+        return []domain.Post{}, map[int64]domain.Post{}, nil
+    }
+
+    posts, err := buildPostLists(ctx, bases, viewerID)
+    if err != nil {
+        return nil, nil, fmt.Errorf("failed building posts: %w", err)
+    }
+
+    quotedMap, err := getQuotedPostsByIDs(ctx, posts)
+    if err != nil {
+        return nil, nil, fmt.Errorf("failed building quoted posts: %w", err)
+    }
+
+    return posts, quotedMap, nil
 }
 
+
+
+
+
 // GetPersonalRecentPosts returns only PostBase for a user.
-func GetPersonalRecentPosts(
+func GetPersonalRecentPostBases(
 	ctx context.Context,
 	userID int64,
 	beforeStr string,
@@ -316,24 +331,91 @@ func GetPersonalRecentPosts(
 //   - stats from post_stats
 //   - school_name
 //   - viewer's like/fav flags
-func GetPersonalRecentPostsWithStats(
-	ctx context.Context,
-	userID int64,
-	viewerID int64,
-	beforeStr string,
-	limit int,
-) ([]domain.Post, error) {
+func GetPersonalRecentPosts(
+    ctx context.Context,
+    userID int64,
+    viewerID int64,
+    beforeStr string,
+    limit int,
+) ([]domain.Post, map[int64]domain.Post, error) {
 
-	bases, err := GetPersonalRecentPosts(ctx, userID, beforeStr, limit)
-	if err != nil {
-		return nil, fmt.Errorf("failed to list posts: %v", err)
-	}
-	if len(bases) == 0 {
-		return []domain.Post{}, nil
-	}
+    bases, err := GetPersonalRecentPostBases(ctx, userID, beforeStr, limit)
+    if err != nil {
+        return nil, nil, fmt.Errorf("failed to list posts: %v", err)
+    }
+    if len(bases) == 0 {
+        return []domain.Post{}, map[int64]domain.Post{}, nil
+    }
 
-	return buildPostListWithStats(ctx, bases, viewerID)
+    posts, err := buildPostLists(ctx, bases, viewerID)
+    if err != nil {
+        return nil, nil, fmt.Errorf("failed building posts: %w", err)
+    }
+
+    quotedMap, err := getQuotedPostsByIDs(ctx, posts)
+    if err != nil {
+        return nil, nil, fmt.Errorf("failed building quoted posts: %w", err)
+    }
+
+    return posts, quotedMap, nil
 }
+
+
+func getQuotedPostsByIDs(ctx context.Context, posts []domain.Post) (map[int64]domain.Post, error) {
+    // 返回结果：key = 被引用帖子的 ID（ReplyTo），value = 对应的完整 Post
+    result := make(map[int64]domain.Post)
+    if len(posts) == 0 {
+        return result, nil
+    }
+
+    // 1) 收集所有非空 ReplyTo，去重
+    replyIDSet := make(map[int64]struct{})
+    for _, p := range posts {
+        if p.ReplyTo != nil {
+            id := *p.ReplyTo
+            if id > 0 {
+                replyIDSet[id] = struct{}{}
+            }
+        }
+    }
+
+    // 如果这一页压根没有引用任何帖子，直接返回空 map
+    if len(replyIDSet) == 0 {
+        return result, nil
+    }
+
+    // 2) 按 ID 去 DB 拿 PostBase
+    bases := make([]domain.PostBase, 0, len(replyIDSet))
+    for replyID := range replyIDSet {
+        base, err := post_base_repo.GetPostBaseByID(ctx, replyID)
+        if err != nil {
+            if errors.Is(err, gorm.ErrRecordNotFound) {
+                // 被删了的原帖：跳过
+                continue
+            }
+            return nil, fmt.Errorf("failed to load quoted post %d: %w", replyID, err)
+        }
+        bases = append(bases, *base)
+    }
+
+    if len(bases) == 0 {
+        // 全部都找不到（被删光了），也算正常情况
+        return result, nil
+    }
+
+    quotedPosts, err := buildPostLists(ctx, bases, 0 /* viewerID=0，不需要 like/fav flags */)
+    if err != nil {
+        return nil, fmt.Errorf("failed building quoted posts: %w", err)
+    }
+
+    // 4) 写入 result：key = 帖子 ID
+    for _, qp := range quotedPosts {
+        result[qp.ID] = qp
+    }
+
+    return result, nil
+}
+
 
 ///////////////////////////////////////////////////////////////////////////////
 // Like / Unlike / Favorite / Unfavorite
@@ -475,7 +557,7 @@ func parseBeforeTime(beforeStr string) (time.Time, error) {
 	// fallback to RFC3339
 	return time.Parse(time.RFC3339, beforeStr)
 }
-// buildPostListWithStats:
+// buildPostLists:
 //   - Input: []PostBase
 //   - Output: []Post with:
 //       * base fields
@@ -489,7 +571,7 @@ func parseBeforeTime(beforeStr string) (time.Time, error) {
 //   - Schools are loaded in a single call from in-memory cache.
 //   - Users are loaded in batch by user IDs.
 //   - Viewer interactions are loaded in batch via GetUserLikedPostIDs / GetUserFavoritedPostIDs.
-func buildPostListWithStats(
+func buildPostLists(
 	ctx context.Context,
 	bases []domain.PostBase,
 	viewerID int64,

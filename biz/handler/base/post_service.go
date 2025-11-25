@@ -270,7 +270,7 @@ func GetSchoolRecentPosts(ctx context.Context, c *app.RequestContext) {
 		viewerID = id
 	}
 
-	posts, err := post_service.GetSchoolRecentPostsWithStats(
+	posts, postIDToQuotedPosts, err := post_service.GetSchoolRecentPosts(
 		ctx,
 		req.SchoolID,
 		viewerID,
@@ -286,16 +286,11 @@ func GetSchoolRecentPosts(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	thriftPosts := domain.DomainPostListToThrift(posts)
-	thriftPostPointers := make([]*post.Post, len(thriftPosts))
-	for i := range thriftPosts {
-		thriftPostPointers[i] = &thriftPosts[i]
-	}
-
 	resp := post.GetSchoolRecentPostsResp{
 		IsSuccessful: true,
 		ErrorMessage: "",
-		Posts:        thriftPostPointers,
+		QuotedPosts:  domain.DomainPostMapToThriftPointerMap(postIDToQuotedPosts),
+		Posts:        domain.DomainPostListToThriftPointers(posts),
 	}
 
 	c.JSON(consts.StatusOK, resp)
@@ -327,7 +322,7 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		viewerID = id
 	}
 
-	posts, err := post_service.GetPersonalRecentPostsWithStats(
+	posts, postIDToQuotedPosts, err := post_service.GetPersonalRecentPosts(
 		ctx,
 		req.UserID,
 		viewerID,
@@ -343,17 +338,11 @@ func GetPersonalRecentPosts(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// 新版：[]domain.Post -> []thrift.Post
-	thriftPosts := domain.DomainPostListToThrift(posts)
-	thriftPostPointers := make([]*post.Post, len(thriftPosts))
-	for i := range thriftPosts {
-		thriftPostPointers[i] = &thriftPosts[i]
-	}
-
 	resp := post.GetPersonalRecentPostsResp{
 		IsSuccessful: true,
 		ErrorMessage: "",
-		Posts:        thriftPostPointers,
+		QuotedPosts:  domain.DomainPostMapToThriftPointerMap(postIDToQuotedPosts),
+		Posts:        domain.DomainPostListToThriftPointers(posts),
 	}
 
 	c.JSON(consts.StatusOK, resp)

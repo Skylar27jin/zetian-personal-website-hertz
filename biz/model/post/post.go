@@ -3530,11 +3530,10 @@ func (p *GetSchoolRecentPostsReq) String() string {
 }
 
 type GetSchoolRecentPostsResp struct {
-	IsSuccessful bool    `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
-	ErrorMessage string  `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
-	Posts        []*Post `thrift:"posts,3,default,list<Post>" form:"posts" json:"posts" query:"posts"`
-	//min(posts.created_at), so that frontend is able to eaisly search for the next group of posts
-	OldestTime string `thrift:"oldestTime,4" form:"oldestTime" json:"oldestTime" query:"oldestTime"`
+	IsSuccessful bool            `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
+	ErrorMessage string          `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
+	Posts        []*Post         `thrift:"posts,3,default,list<Post>" form:"posts" json:"posts" query:"posts"`
+	QuotedPosts  map[int64]*Post `thrift:"quoted_posts,4" form:"quoted_posts" json:"quoted_posts" query:"quoted_posts"`
 }
 
 func NewGetSchoolRecentPostsResp() *GetSchoolRecentPostsResp {
@@ -3556,15 +3555,15 @@ func (p *GetSchoolRecentPostsResp) GetPosts() (v []*Post) {
 	return p.Posts
 }
 
-func (p *GetSchoolRecentPostsResp) GetOldestTime() (v string) {
-	return p.OldestTime
+func (p *GetSchoolRecentPostsResp) GetQuotedPosts() (v map[int64]*Post) {
+	return p.QuotedPosts
 }
 
 var fieldIDToName_GetSchoolRecentPostsResp = map[int16]string{
 	1: "isSuccessful",
 	2: "errorMessage",
 	3: "posts",
-	4: "oldestTime",
+	4: "quoted_posts",
 }
 
 func (p *GetSchoolRecentPostsResp) Read(iprot thrift.TProtocol) (err error) {
@@ -3611,7 +3610,7 @@ func (p *GetSchoolRecentPostsResp) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 4:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.MAP {
 				if err = p.ReadField4(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -3693,14 +3692,32 @@ func (p *GetSchoolRecentPostsResp) ReadField3(iprot thrift.TProtocol) error {
 	return nil
 }
 func (p *GetSchoolRecentPostsResp) ReadField4(iprot thrift.TProtocol) error {
-
-	var _field string
-	if v, err := iprot.ReadString(); err != nil {
+	_, _, size, err := iprot.ReadMapBegin()
+	if err != nil {
 		return err
-	} else {
-		_field = v
 	}
-	p.OldestTime = _field
+	_field := make(map[int64]*Post, size)
+	values := make([]Post, size)
+	for i := 0; i < size; i++ {
+		var _key int64
+		if v, err := iprot.ReadI64(); err != nil {
+			return err
+		} else {
+			_key = v
+		}
+
+		_val := &values[i]
+		_val.InitDefault()
+		if err := _val.Read(iprot); err != nil {
+			return err
+		}
+
+		_field[_key] = _val
+	}
+	if err := iprot.ReadMapEnd(); err != nil {
+		return err
+	}
+	p.QuotedPosts = _field
 	return nil
 }
 
@@ -3804,10 +3821,21 @@ WriteFieldEndError:
 }
 
 func (p *GetSchoolRecentPostsResp) writeField4(oprot thrift.TProtocol) (err error) {
-	if err = oprot.WriteFieldBegin("oldestTime", thrift.STRING, 4); err != nil {
+	if err = oprot.WriteFieldBegin("quoted_posts", thrift.MAP, 4); err != nil {
 		goto WriteFieldBeginError
 	}
-	if err := oprot.WriteString(p.OldestTime); err != nil {
+	if err := oprot.WriteMapBegin(thrift.I64, thrift.STRUCT, len(p.QuotedPosts)); err != nil {
+		return err
+	}
+	for k, v := range p.QuotedPosts {
+		if err := oprot.WriteI64(k); err != nil {
+			return err
+		}
+		if err := v.Write(oprot); err != nil {
+			return err
+		}
+	}
+	if err := oprot.WriteMapEnd(); err != nil {
 		return err
 	}
 	if err = oprot.WriteFieldEnd(); err != nil {
@@ -4061,9 +4089,10 @@ func (p *GetPersonalRecentPostsReq) String() string {
 }
 
 type GetPersonalRecentPostsResp struct {
-	IsSuccessful bool    `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
-	ErrorMessage string  `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
-	Posts        []*Post `thrift:"posts,3,default,list<Post>" form:"posts" json:"posts" query:"posts"`
+	IsSuccessful bool            `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
+	ErrorMessage string          `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
+	Posts        []*Post         `thrift:"posts,3,default,list<Post>" form:"posts" json:"posts" query:"posts"`
+	QuotedPosts  map[int64]*Post `thrift:"quoted_posts,4" form:"quoted_posts" json:"quoted_posts" query:"quoted_posts"`
 }
 
 func NewGetPersonalRecentPostsResp() *GetPersonalRecentPostsResp {
@@ -4085,10 +4114,15 @@ func (p *GetPersonalRecentPostsResp) GetPosts() (v []*Post) {
 	return p.Posts
 }
 
+func (p *GetPersonalRecentPostsResp) GetQuotedPosts() (v map[int64]*Post) {
+	return p.QuotedPosts
+}
+
 var fieldIDToName_GetPersonalRecentPostsResp = map[int16]string{
 	1: "isSuccessful",
 	2: "errorMessage",
 	3: "posts",
+	4: "quoted_posts",
 }
 
 func (p *GetPersonalRecentPostsResp) Read(iprot thrift.TProtocol) (err error) {
@@ -4129,6 +4163,14 @@ func (p *GetPersonalRecentPostsResp) Read(iprot thrift.TProtocol) (err error) {
 		case 3:
 			if fieldTypeId == thrift.LIST {
 				if err = p.ReadField3(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 4:
+			if fieldTypeId == thrift.MAP {
+				if err = p.ReadField4(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -4208,6 +4250,35 @@ func (p *GetPersonalRecentPostsResp) ReadField3(iprot thrift.TProtocol) error {
 	p.Posts = _field
 	return nil
 }
+func (p *GetPersonalRecentPostsResp) ReadField4(iprot thrift.TProtocol) error {
+	_, _, size, err := iprot.ReadMapBegin()
+	if err != nil {
+		return err
+	}
+	_field := make(map[int64]*Post, size)
+	values := make([]Post, size)
+	for i := 0; i < size; i++ {
+		var _key int64
+		if v, err := iprot.ReadI64(); err != nil {
+			return err
+		} else {
+			_key = v
+		}
+
+		_val := &values[i]
+		_val.InitDefault()
+		if err := _val.Read(iprot); err != nil {
+			return err
+		}
+
+		_field[_key] = _val
+	}
+	if err := iprot.ReadMapEnd(); err != nil {
+		return err
+	}
+	p.QuotedPosts = _field
+	return nil
+}
 
 func (p *GetPersonalRecentPostsResp) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
@@ -4225,6 +4296,10 @@ func (p *GetPersonalRecentPostsResp) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField3(oprot); err != nil {
 			fieldId = 3
+			goto WriteFieldError
+		}
+		if err = p.writeField4(oprot); err != nil {
+			fieldId = 4
 			goto WriteFieldError
 		}
 	}
@@ -4302,6 +4377,34 @@ WriteFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 begin error: ", p), err)
 WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
+}
+
+func (p *GetPersonalRecentPostsResp) writeField4(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("quoted_posts", thrift.MAP, 4); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteMapBegin(thrift.I64, thrift.STRUCT, len(p.QuotedPosts)); err != nil {
+		return err
+	}
+	for k, v := range p.QuotedPosts {
+		if err := oprot.WriteI64(k); err != nil {
+			return err
+		}
+		if err := v.Write(oprot); err != nil {
+			return err
+		}
+	}
+	if err := oprot.WriteMapEnd(); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 4 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
 func (p *GetPersonalRecentPostsResp) String() string {
