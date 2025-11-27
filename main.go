@@ -6,7 +6,6 @@ import (
 	"zetian-personal-website-hertz/biz/pkg/s3uploader"
 	"zetian-personal-website-hertz/biz/repository"
 	"zetian-personal-website-hertz/biz/repository/school_repo"
-
 	"github.com/cloudwego/hertz/pkg/app/server"
 	"github.com/hertz-contrib/cors"
 )
@@ -20,8 +19,9 @@ func main() {
 
 	
 	
-	h := server.Default()
-	h.Use(cors.New(cors.Config{
+	h := server.New(server.WithMaxRequestBodySize(16 << 20))
+	h.Use(
+		cors.New(cors.Config{
 		AllowOrigins: []string{
 			"http://localhost:5173",   // 本地调试
 			"https://skylar27.com",    // 线上正式域名
