@@ -9,10 +9,10 @@ import (
 	"time"
 
 	"zetian-personal-website-hertz/biz/domain"
+	"zetian-personal-website-hertz/biz/repository/post_repo/post_base_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_fav_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_like_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_stats_repo"
-    "zetian-personal-website-hertz/biz/repository/post_repo/post_base_repo"
 	"zetian-personal-website-hertz/biz/repository/school_repo"
 	"zetian-personal-website-hertz/biz/repository/user_repo"
 
@@ -254,6 +254,18 @@ func GetPost(
 	p := &posts[0]
 
 	return p, nil
+}
+
+func GetPostBase(	
+	ctx context.Context,
+	postID int64,
+) (*domain.PostBase, error) {
+
+	base, err := post_base_repo.GetPostBaseByID(ctx, postID)
+	if err != nil {
+		return nil, fmt.Errorf("failed to load post: %w", err)
+	}
+	return base, nil
 }
 
 ///////////////////////////////////////////////////////////////////////////////

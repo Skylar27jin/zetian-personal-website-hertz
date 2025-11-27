@@ -1,11 +1,13 @@
 package picture_upload_service
 
 import (
-    "context"
-    "fmt"
-    "mime/multipart"
+	"context"
+	"encoding/json"
+	"fmt"
+	"mime/multipart"
+	"strings"
 
-    "zetian-personal-website-hertz/biz/pkg/s3uploader"
+	"zetian-personal-website-hertz/biz/pkg/s3uploader"
 )
 
 // UploadPostImages uploads one or more images for a post and returns S3 URLs.
@@ -32,4 +34,34 @@ func UploadPostImages(ctx context.Context, userID int64, files []*multipart.File
     }
 
     return urls, nil
+}
+
+
+func DeletePostImagesByURLs(ctx context.Context, urls []string) {
+    for _, u := range urls {
+        if u == "" {
+            continue
+        }
+        if err := s3uploader.S3uploader.DeleteByURL(ctx, u); err != nil {
+            fmt.Printf("⚠ delete s3 media failed: %s, err=%v\n", u, err)
+        }
+    }
+}
+
+
+// DeletePostImagesJSON parses JSON string from DB and deletes all S3 objects.
+// mediaJSON 形如：["https://xxx","https://yyy"]
+func DeletePostImagesJSON(ctx context.Context, mediaJSON string) {
+    mediaJSON = strings.TrimSpace(mediaJSON)
+    if mediaJSON == "" || mediaJSON == "[]" || mediaJSON == "null" {
+        return
+    }
+
+    var urls []string
+    if err := json.Unmarshal([]byte(mediaJSON), &urls); err != nil {
+        fmt.Printf("⚠ parse media urls json failed, json=%s, err=%v\n", mediaJSON, err)
+        return
+    }
+
+    DeletePostImagesByURLs(ctx, urls)
 }

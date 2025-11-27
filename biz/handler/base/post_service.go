@@ -210,7 +210,6 @@ func DeletePost(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	fmt.Println("Entered DeletePost", req.GetID())
 	jwtStr := string(c.Cookie("JWT"))
 	_, _, _, exp, userID, err := auth_service.ParseUserJWT(ctx, jwtStr)
 	if err != nil {
@@ -227,6 +226,16 @@ func DeletePost(ctx context.Context, c *app.RequestContext) {
 		})
 		return
 	}
+
+	postToBeDelete, err := post_service.GetPostBase(ctx, req.GetID())
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, post.DeletePostResp{
+			IsSuccessful: false,
+			ErrorMessage: "Failed to fetch post before deletion: " + err.Error(),
+		})
+		return
+	}
+	picture_upload_service.DeletePostImagesJSON(ctx, postToBeDelete.MediaUrls)
 
 	err = post_service.DeletePost(ctx, userID, req.GetID())
 	if errors.Is(err, gorm.ErrRecordNotFound) {
@@ -476,6 +485,10 @@ func getViewerIDFromJWTOrWriteUnauthorized(
 	return uid, true
 }
 
+
+/*
+sample call:
+*/
 // UploadPostMedia .
 // @router /post/media/upload [POST]
 func UploadPostMedia(ctx context.Context, c *app.RequestContext) {
