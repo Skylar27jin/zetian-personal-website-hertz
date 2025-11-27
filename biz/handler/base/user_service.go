@@ -14,8 +14,8 @@ import (
 	"zetian-personal-website-hertz/biz/config"
 	user "zetian-personal-website-hertz/biz/model/user"
 	authService "zetian-personal-website-hertz/biz/service/auth_service"
-	userService "zetian-personal-website-hertz/biz/service/user_service"
 	"zetian-personal-website-hertz/biz/service/picture_upload_service"
+	userService "zetian-personal-website-hertz/biz/service/user_service"
 )
 
 /*
@@ -343,5 +343,6 @@ func UpdateAvatar(ctx context.Context, c *app.RequestContext) {
 	c.JSON(consts.StatusOK, user.UpdateAvatarResp{
 		IsSuccessful: true,
 		ErrorMessage: "",
+		AvatarUrl:    avatarURL,
 	})
 }

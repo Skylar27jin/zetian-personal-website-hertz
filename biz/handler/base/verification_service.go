@@ -163,6 +163,6 @@ func Me(ctx context.Context, c *app.RequestContext) {
 		ID:           id,
 		Username:     username,
 		Email:        email,
-		AvatarURL: u.AvatarUrl,
+		AvatarURL:    u.AvatarUrl,
 	})
 }

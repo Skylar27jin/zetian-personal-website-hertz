@@ -74,4 +74,5 @@ struct UpdateAvatarReq {
 struct UpdateAvatarResp {
     1: bool isSuccessful;
     2: string errorMessage;
+    3: string avatarUrl;
 }

@@ -34,4 +34,5 @@ struct MeResp {
     3: i64 id;
     4: string email;
     5: string username;
+    6: string avatar_url;
 }

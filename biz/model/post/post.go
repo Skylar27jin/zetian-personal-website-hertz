@@ -5220,6 +5220,7 @@ func (p *UserFlagPostResq) String() string {
 }
 
 // place holder
+// body里，images=要上传的文件
 type UploadPostMediaReq struct {
 }
 
