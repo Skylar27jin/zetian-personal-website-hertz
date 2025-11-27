@@ -132,3 +132,10 @@ ps aux | grep server-linux
 tail -f server.log
 ```
 
+
+
+# 技术栈:
+bcrypt 加密密码
+在cookie里：JWT储存登录信息
+
+

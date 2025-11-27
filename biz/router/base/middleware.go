@@ -145,3 +145,13 @@ func _resetpasswordMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _mediaMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _uploadpostmediaMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

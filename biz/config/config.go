@@ -13,6 +13,12 @@ type SpecificConfig struct {
     DB_DSN       string `yaml:"db_dsn"`
     Domain       string `yaml:"domain"`
     CookieSecure bool `yaml:"cookie_secure"`
+
+
+    //S3 / CloudFront 相关配置
+    AWSRegion string `yaml:"aws_region"` // 比如 "us-east-2"
+    S3Bucket  string `yaml:"s3_bucket"`  // 比如 "project-talk-media"
+    CDNDomain string `yaml:"cdn_domain"` // 比如 "cdn.skylar27.com",可留空
 }
 
 type GeneralConfig struct {
@@ -54,6 +60,9 @@ func GetSpecificConfig() SpecificConfig {
         DB_DSN: specificCfg.DB_DSN,
         Domain: specificCfg.Domain,
         CookieSecure: specificCfg.CookieSecure,
+        AWSRegion: specificCfg.AWSRegion,
+        S3Bucket:  specificCfg.S3Bucket,
+        CDNDomain: specificCfg.CDNDomain,
     }
 }
 

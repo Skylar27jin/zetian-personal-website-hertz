@@ -2,3 +2,8 @@ env: prod
 db_dsn: "host=zetian-personal-website-postgre.c1uyeekq4253.us-east-2.rds.amazonaws.com user=skylar27jin password=zetian-personal-website-postgre dbname=postgres port=5432 sslmode=require"
 domain:  "skylar27.com" #store coookie to which domain
 cookie_secure: true #是否只能通过https设置cookie
+
+
+aws_region: "us-east-2"
+s3_bucket: "project-talk-media"
+cdn_domain: ""

@@ -45,11 +45,13 @@ service PostService {
 
     //like, unlike, fav, unfav will authorize user based on the JWT
     //user_id likes post_id, but will check whether user_id == JWT
-
+    //looks like LikePostReq and UserFlagPostResq are typo, TOFIX later
     post.LikePostReq LikePost(1: post.UserFlagPostResq request) (api.post="/post/like")
     post.UnlikePostReq UnlikePost(1: post.UserFlagPostResq request) (api.post="/post/unlike")
     post.FavPostReq FavPost(1: post.UserFlagPostResq request) (api.post="/post/fav")
     post.UnfavPostReq UnfavPost(1: post.UserFlagPostResq request) (api.post="/post/unfav")
+
+    post.UploadPostMediaResp UploadPostMedia(1: post.UploadPostMediaReq request) (api.post="/post/media/upload")
 }
 
 service SchoolService {

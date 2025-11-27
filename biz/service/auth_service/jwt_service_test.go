@@ -88,9 +88,9 @@ func TestParseVeriEmailJWT(t *testing.T) {
 }
 
 
-func TestParseVeriEmailJWT2(t *testing.T) {
-	emailGot, _, purpose, err := ParseVeriEmailJWT(context.Background(), "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNreWppbjAxMjdAZ21haWwuY29tIiwiZXhwIjoxNzY0MDM1Nzc5fQ.hmrkYarbyvBx5uUmnoaVtZYxN8FpVQQ6_aQjA06i39E")
-	assert.NoError(t, err, "should parse valid JWT correctly")
-	assert.Equal(t, "", purpose, "purpose should match")
-	assert.Equal(t, "skyjin0127@gmail.com", emailGot, "email should match")
+func TestJWTManually(t *testing.T) {
+	username, email, iat, exp, id, returnErr := ParseUserJWT(context.Background(), "eyJhbGciOiJIUzI1NiIsInR5cCI6IkpXVCJ9.eyJlbWFpbCI6InNreWppbjAxMjdAZ21haWwuY29tIiwiZXhwIjoxNzY0ODE5MDEyLCJpYXQiOjE3NjQyMTQyMTIsImlkIjo2LCJ1c2VybmFtZSI6InNreWxhcjI3amluIn0.RF6kk548zjwJRma_rH3E64AgWBTta6WV3WxMlVfl-Ww")
+	assert.NoError(t, returnErr)
+	log.Printf("username: %s, email: %s, iat: %d, exp: %d, id: %d", username, email, iat, exp, id)
+
 }

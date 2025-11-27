@@ -134,3 +134,12 @@ struct UserFlagPostResq {
     2: string errorMessage;
 }
 
+//place holder
+struct UploadPostMediaReq {
+}
+
+struct UploadPostMediaResp {
+  1: bool isSuccessful,
+  2: string errorMessage,
+  3: list<string> urls,  // 后端已经上传完 S3 的最终访问地址
+}

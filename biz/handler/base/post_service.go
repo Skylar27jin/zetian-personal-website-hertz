@@ -11,6 +11,7 @@ import (
 	"zetian-personal-website-hertz/biz/domain"
 	post "zetian-personal-website-hertz/biz/model/post"
 	"zetian-personal-website-hertz/biz/service/auth_service"
+	"zetian-personal-website-hertz/biz/service/picture_upload_service"
 	"zetian-personal-website-hertz/biz/service/post_service"
 
 	"github.com/cloudwego/hertz/pkg/app"
@@ -473,4 +474,62 @@ func getViewerIDFromJWTOrWriteUnauthorized(
 	}
 
 	return uid, true
+}
+
+// UploadPostMedia .
+// @router /post/media/upload [POST]
+func UploadPostMedia(ctx context.Context, c *app.RequestContext) {
+	// 1. JWT 鉴权，拿 userID
+	jwtStr := string(c.Cookie("JWT"))
+
+	_, _, _, exp, userID, err := auth_service.ParseUserJWT(ctx, jwtStr)
+	if err != nil {
+		fmt.Println("Error when testing:", err.Error())
+	}
+
+	if err != nil || exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, post.UploadPostMediaResp{
+			IsSuccessful: false,
+			ErrorMessage: "unauthorized, please login again",
+		})
+		return
+	}
+
+	// 2. 解析 multipart/form-data
+	form, err := c.MultipartForm()
+	if err != nil {
+		c.JSON(consts.StatusBadRequest, post.UploadPostMediaResp{
+			IsSuccessful: false,
+			ErrorMessage: "invalid multipart form: " + err.Error(),
+		})
+		return
+	}
+
+	// 前端约定字段名，比如 "images"
+	files := form.File["images"]
+	if len(files) == 0 {
+		c.JSON(consts.StatusBadRequest, post.UploadPostMediaResp{
+			IsSuccessful: false,
+			ErrorMessage: "no files uploaded",
+		})
+		return
+	}
+
+	// 3. 调用你刚写的 service，上传到 S3
+	urls, err := picture_upload_service.UploadPostImages(ctx, userID, files)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, post.UploadPostMediaResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	// 4. 返回 thrift 定义的 resp
+	c.JSON(consts.StatusOK, post.UploadPostMediaResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+
+		Urls: urls,
+	})
 }

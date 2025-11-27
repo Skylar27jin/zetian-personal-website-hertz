@@ -13,7 +13,7 @@ import (
 
 const (
 	Sender    = "skylar27-no-reply@skylar27.com"
-	AWSRegion = "us-east-2" // 你的 SES 域在 Ohio
+	AWSRegion = "us-east-2"
 )
 
 var client *sesv2.Client

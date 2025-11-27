@@ -34,6 +34,10 @@ func Register(r *server.Hertz) {
 		_post.POST("/unfav", append(_unfavpostMw(), base.UnfavPost)...)
 		_post.POST("/unlike", append(_unlikepostMw(), base.UnlikePost)...)
 		{
+			_media := _post.Group("/media", _mediaMw()...)
+			_media.POST("/upload", append(_uploadpostmediaMw(), base.UploadPostMedia)...)
+		}
+		{
 			_school := _post.Group("/school", _schoolMw()...)
 			_school.GET("/recent", append(_getschoolrecentpostsMw(), base.GetSchoolRecentPosts)...)
 		}
