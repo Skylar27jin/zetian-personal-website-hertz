@@ -485,7 +485,6 @@ func getViewerIDFromJWTOrWriteUnauthorized(
 	return uid, true
 }
 
-
 /*
 sample call:
 */

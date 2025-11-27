@@ -15,6 +15,7 @@ import (
 	user "zetian-personal-website-hertz/biz/model/user"
 	authService "zetian-personal-website-hertz/biz/service/auth_service"
 	userService "zetian-personal-website-hertz/biz/service/user_service"
+	"zetian-personal-website-hertz/biz/service/picture_upload_service"
 )
 
 /*
@@ -277,4 +278,70 @@ func ResetPassword(ctx context.Context, c *app.RequestContext) {
 	})
 	//clear the veriEmailJWT, disabling user's ability to modify email
 	clearVeriEmailCookie(c)
+}
+
+// UpdateAvatar .
+// @router /user/update-avatar [POST]
+func UpdateAvatar(ctx context.Context, c *app.RequestContext) {
+	// 0. 这个接口走 multipart/form-data，不适合 BindAndValidate，就不用 req 了
+	// var req user.UpdateAvatarReq
+	// if err := c.BindAndValidate(&req); err != nil { ... }
+
+	// 1. JWT 鉴权，拿 userID（和 UploadPostMedia 一样）
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, userID, err := authService.ParseUserJWT(ctx, jwtStr)
+	if err != nil {
+		fmt.Println("parse JWT error:", err.Error())
+	}
+	if err != nil || exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, user.UpdateAvatarResp{
+			IsSuccessful: false,
+			ErrorMessage: "unauthorized, please login again",
+		})
+		return
+	}
+
+	// 2. 从 multipart/form-data 里拿单个文件：字段名 "avatar"
+	fileHeader, err := c.FormFile("avatar")
+	if err != nil {
+		c.JSON(consts.StatusBadRequest, user.UpdateAvatarResp{
+			IsSuccessful: false,
+			ErrorMessage: "avatar file is required",
+		})
+		return
+	}
+
+	// 可以简单做点限制（可选）
+	if fileHeader.Size > 5*1024*1024 { // 5MB
+		c.JSON(consts.StatusBadRequest, user.UpdateAvatarResp{
+			IsSuccessful: false,
+			ErrorMessage: "avatar file too large (max 5MB)",
+		})
+		return
+	}
+
+	// 3. 调用上传 service：上传到 S3，返回一个 URL
+	avatarURL, err := picture_upload_service.UploadAvatar(ctx, userID, fileHeader)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, user.UpdateAvatarResp{
+			IsSuccessful: false,
+			ErrorMessage: "upload avatar failed: " + err.Error(),
+		})
+		return
+	}
+
+	// 4. 更新 DB 中用户的 avatar_url 字段
+	if err := userService.UpdateAvatarURL(ctx, userID, avatarURL); err != nil {
+		c.JSON(consts.StatusInternalServerError, user.UpdateAvatarResp{
+			IsSuccessful: false,
+			ErrorMessage: "update avatar url failed: " + err.Error(),
+		})
+		return
+	}
+
+	// 5. 返回成功
+	c.JSON(consts.StatusOK, user.UpdateAvatarResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+	})
 }

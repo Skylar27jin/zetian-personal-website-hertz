@@ -155,3 +155,8 @@ func _uploadpostmediaMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _updateavatarMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

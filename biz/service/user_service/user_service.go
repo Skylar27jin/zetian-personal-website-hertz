@@ -108,3 +108,19 @@ func ResetPassword(ctx context.Context, email, newPassword string) error {
 }
 
 
+func UpdateAvatarURL(ctx context.Context, userID int64, avatarURL string) error {
+	user, err := userRepo.GetUserByID(ctx, userID)
+	if err != nil || user == nil {
+		return fmt.Errorf("email does not exist")
+	}
+
+
+	user.AvatarUrl = avatarURL
+
+	err = userRepo.UpdateUser(ctx, user)
+	if err != nil {
+		return err
+	}
+
+	return nil
+}

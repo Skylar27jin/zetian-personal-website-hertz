@@ -10,6 +10,7 @@ import (
 	verification "zetian-personal-website-hertz/biz/model/verification"
 	"zetian-personal-website-hertz/biz/service/auth_service"
 	"zetian-personal-website-hertz/biz/service/email_service"
+	"zetian-personal-website-hertz/biz/service/user_service"
 
 	"github.com/cloudwego/hertz/pkg/app"
 	"github.com/cloudwego/hertz/pkg/protocol"
@@ -148,10 +149,20 @@ func Me(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
+	u, err := user_service.GetUserByID(ctx, id)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, verification.MeResp{
+			IsSuccessful: false,
+			ErrorMessage: "failed to load user",
+		})
+		return
+	}
+
 	c.JSON(consts.StatusOK, verification.MeResp{
 		IsSuccessful: true,
 		ID:           id,
 		Username:     username,
 		Email:        email,
+		AvatarURL: u.AvatarUrl,
 	})
 }

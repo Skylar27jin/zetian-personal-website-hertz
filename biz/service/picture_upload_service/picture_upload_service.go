@@ -10,6 +10,22 @@ import (
 	"zetian-personal-website-hertz/biz/pkg/s3uploader"
 )
 
+
+func UploadAvatar(ctx context.Context, userID int64, fileHeader *multipart.FileHeader) (string, error) {
+    f, err := fileHeader.Open()
+    if err != nil {
+        return "", fmt.Errorf("open file %s failed: %w", fileHeader.Filename, err)
+    }
+
+    url, err := s3uploader.S3uploader.UploadAvatar(ctx, userID, fileHeader.Filename, f)
+    f.Close()
+
+    if err != nil {
+        return "", fmt.Errorf("upload file %s failed: %w", fileHeader.Filename, err)
+    }
+    return url, nil
+}
+
 // UploadPostImages uploads one or more images for a post and returns S3 URLs.
 func UploadPostImages(ctx context.Context, userID int64, files []*multipart.FileHeader) ([]string, error) {
     urls := make([]string, 0, len(files))

@@ -31,6 +31,7 @@ struct Post {
     22: i64 hot_score,             // sort score for hot posts
 
     23: optional string user_name,  // 新增
+    24: optional string user_avatar_url, // 新增
 
 
 }
@@ -135,6 +136,7 @@ struct UserFlagPostResq {
 }
 
 //place holder
+//body里，images=要上传的文件
 struct UploadPostMediaReq {
 }
 

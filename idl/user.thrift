@@ -50,6 +50,7 @@ struct GetUserResp {
     2: string errorMessage;
     3: string userName;
     4: i64    id;
+    5: string avatarUrl;
 }
 
 
@@ -59,6 +60,18 @@ struct ResetPasswordReq {
 }
 
 struct ResetPasswordResp {
+    1: bool isSuccessful;
+    2: string errorMessage;
+}
+
+
+
+//place holder
+//body里，avatar=要上传的文件
+struct UpdateAvatarReq {
+}
+
+struct UpdateAvatarResp {
     1: bool isSuccessful;
     2: string errorMessage;
 }

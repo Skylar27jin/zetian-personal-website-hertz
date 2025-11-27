@@ -20,6 +20,10 @@ type Uploader interface {
     // 上传帖子图片，返回完整 URL（S3 或 CDN）
     UploadPostMedia(ctx context.Context, userID int64, filename string, r io.Reader) (string, error)
 
+    // 上传头像，返回完整 URL
+    UploadAvatar(ctx context.Context, userID int64, filename string, r io.Reader) (string, error)
+
+
     // 根据完整 URL 删除 S3 对象
     DeleteByURL(ctx context.Context, rawURL string) error
 }
@@ -61,6 +65,35 @@ func New(bucket, region, cdnDomain string) (Uploader, error) {
         cdnDomain: cdnDomain,
         region:    region,
     }, nil
+}
+
+func (u *uploader) UploadAvatar(
+    ctx context.Context,
+    userID int64,
+    filename string,
+    r io.Reader,
+) (string, error) {
+    ext := filepath.Ext(filename)
+    if ext == "" {
+        ext = ".jpg"
+    }
+    key := fmt.Sprintf("avatar/%d/%d%s", userID, time.Now().UnixNano(), ext)
+
+    _, err := u.client.PutObject(ctx, &s3.PutObjectInput{
+        Bucket: aws.String(u.bucket),
+        Key:    aws.String(key),
+        Body:   r,
+    })
+    if err != nil {
+        return "", fmt.Errorf("put object: %w", err)
+    }
+
+    // 有 CDN 域名就优先走 CDN
+    if u.cdnDomain != "" {
+        return fmt.Sprintf("https://%s/%s", u.cdnDomain, key), nil
+    }
+    // 默认走 S3 域名
+    return fmt.Sprintf("https://%s.s3.%s.amazonaws.com/%s", u.bucket, u.region, key), nil
 }
 
 func (u *uploader) UploadPostMedia(

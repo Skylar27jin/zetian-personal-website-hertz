@@ -45,6 +45,7 @@ type Post struct {
 
 	SchoolName    string `json:"school_name"`
 	UserName      string `json:"user_name" gorm:"-"`
+	UserAvatarUrl string `json:"user_avatar_url" gorm:"-"`
 	IsLikedByUser bool   `json:"is_liked_by_user"`
 	IsFavByUser   bool   `json:"is_fav_by_user"`
 }
@@ -140,6 +141,7 @@ func ToDomainPost(tp thrift.Post) Post {
 		IsLikedByUser: tp.IsLikedByUser,
 		IsFavByUser:   tp.IsFavByUser,
 		UserName:      *tp.UserName,
+		UserAvatarUrl: *tp.UserAvatarURL,
 	}
 }
 
@@ -160,6 +162,7 @@ func CombineToThriftPost(
 	liked bool,
 	faved bool,
 	userName string,
+	UserAvatarUrl string,
 ) thrift.Post {
 
 	var tags []string
@@ -200,6 +203,7 @@ func CombineToThriftPost(
 		IsLikedByUser: liked,
 		IsFavByUser:   faved,
 		UserName:      &userName,
+		UserAvatarURL: &UserAvatarUrl,
 
 	}
 }
@@ -217,6 +221,7 @@ func DomainPostToThrift(p Post) thrift.Post {
 		p.IsLikedByUser,
 		p.IsFavByUser,
 		p.UserName,
+		p.UserAvatarUrl,
 	)
 }
 

@@ -12,6 +12,7 @@ service UserService {
     user.LogoutResp Logout(1: user.LogoutReq request) (api.post="logout");
     user.GetUserResp GetUser(1: user.GetUserReq request) (api.get="/user/get");
     user.ResetPasswordResp ResetPassword(1: user.ResetPasswordReq request) (api.post="/user/reset-password");
+    user.UpdateAvatarResp UpdateAvatar(1: user.UpdateAvatarReq request) (api.post="/user/update-avatar");
 }
 
 service NumberOperationService {
