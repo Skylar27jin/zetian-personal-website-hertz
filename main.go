@@ -19,7 +19,8 @@ func main() {
 
 	
 	
-	h := server.New(server.WithMaxRequestBodySize(16 << 20))
+	h := server.New(server.WithMaxRequestBodySize(16 << 20 * 20))
+	//max 320MB (single picture 16MB, max 20 pictures)
 	h.Use(
 		cors.New(cors.Config{
 		AllowOrigins: []string{

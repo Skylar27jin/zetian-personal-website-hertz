@@ -139,3 +139,20 @@ bcrypt 加密密码
 在cookie里：JWT储存登录信息
 
 
+
+
+# http传输 body size limit:
+sometimes passing pictures will be exceed the body limit~
+
+## in hertz
+default is 4MB according to CloudWeGo
+```
+	h := server.New(server.WithMaxRequestBodySize(16 << 20 * 20))
+	//max 320MB (single picture 16MB, max 20 pictures)
+```
+
+## in Nginx:
+
+
+
+sudo nginx -s reload
