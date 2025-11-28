@@ -107,11 +107,11 @@ func CreatePost(ctx context.Context, c *app.RequestContext) {
 		return
 	}
 
-	// ✅ 使用新版 CreatePost：带 media / tags / replyTo
 	domainPost, err := post_service.CreatePost(
 		ctx,
 		req.GetUserID(),
 		req.GetSchoolID(),
+		req.GetCategoryID(),
 		req.GetTitle(),
 		req.GetContent(),
 		req.GetMediaType(), // string

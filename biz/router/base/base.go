@@ -23,6 +23,10 @@ func Register(r *server.Hertz) {
 	root.POST("/signup", append(_signupMw(), base.SignUp)...)
 	root.GET("/to_binary", append(_gettobinaryMw(), base.GetToBinary)...)
 	{
+		_category := root.Group("/category", _categoryMw()...)
+		_category.GET("/all", append(_getallcategoriesMw(), base.GetAllCategories)...)
+	}
+	{
 		_post := root.Group("/post", _postMw()...)
 		_post.POST("/create", append(_createpostMw(), base.CreatePost)...)
 		_post.POST("/delete", append(_deletepostMw(), base.DeletePost)...)

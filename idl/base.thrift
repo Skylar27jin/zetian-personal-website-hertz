@@ -5,6 +5,7 @@ include "numberOperation.thrift"
 include "verification.thrift"
 include "post.thrift"
 include "school.thrift"
+include "category.thrift"
 
 service UserService {
     user.LoginResp Login(1: user.LoginReq request) (api.post="/login");
@@ -29,7 +30,6 @@ service VerificationService {
     verification.MeResp Me(1: verification.MeReq request) (api.get="/me")
     //1, get "JWT" from Cookie; 2, verify whether cookie is not expired and JWT is not expired; 3, if both are not expired, return id, name, and email
 }
-
 
 service PostService {
     post.GetPostByIDResp GetPostByID(1: post.GetPostByIDReq request) (api.get="/post/get")
@@ -57,4 +57,9 @@ service PostService {
 
 service SchoolService {
     school.GetAllSchoolsResp GetAllSchools(1: school.GetAllSchoolsReq request) (api.get="/school/all");
+}
+
+
+service CategoryService {
+    category.GetAllCategoriesResp GetAllCategories(1: category.GetAllCategoriesReq request) (api.get="/category/all");
 }

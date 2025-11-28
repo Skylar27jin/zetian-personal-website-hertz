@@ -37,11 +37,11 @@ type Post struct {
 	// timestamp of last comment
 	LastCommentAt int64 `thrift:"last_comment_at,21" form:"last_comment_at" json:"last_comment_at" query:"last_comment_at"`
 	// sort score for hot posts
-	HotScore int64 `thrift:"hot_score,22" form:"hot_score" json:"hot_score" query:"hot_score"`
-	// 新增
-	UserName *string `thrift:"user_name,23,optional" form:"user_name" json:"user_name,omitempty" query:"user_name"`
-	// 新增
+	HotScore      int64   `thrift:"hot_score,22" form:"hot_score" json:"hot_score" query:"hot_score"`
+	UserName      *string `thrift:"user_name,23,optional" form:"user_name" json:"user_name,omitempty" query:"user_name"`
 	UserAvatarURL *string `thrift:"user_avatar_url,24,optional" form:"user_avatar_url" json:"user_avatar_url,omitempty" query:"user_avatar_url"`
+	CategoryID    int64   `thrift:"category_id,32" form:"category_id" json:"category_id" query:"category_id"`
+	CategoryName  string  `thrift:"category_name,33" form:"category_name" json:"category_name" query:"category_name"`
 }
 
 func NewPost() *Post {
@@ -172,6 +172,14 @@ func (p *Post) GetUserAvatarURL() (v string) {
 	return *p.UserAvatarURL
 }
 
+func (p *Post) GetCategoryID() (v int64) {
+	return p.CategoryID
+}
+
+func (p *Post) GetCategoryName() (v string) {
+	return p.CategoryName
+}
+
 var fieldIDToName_Post = map[int16]string{
 	1:  "id",
 	2:  "user_id",
@@ -197,6 +205,8 @@ var fieldIDToName_Post = map[int16]string{
 	22: "hot_score",
 	23: "user_name",
 	24: "user_avatar_url",
+	32: "category_id",
+	33: "category_name",
 }
 
 func (p *Post) IsSetLocation() bool {
@@ -425,6 +435,22 @@ func (p *Post) Read(iprot thrift.TProtocol) (err error) {
 		case 24:
 			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField24(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 32:
+			if fieldTypeId == thrift.I64 {
+				if err = p.ReadField32(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 33:
+			if fieldTypeId == thrift.STRING {
+				if err = p.ReadField33(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -747,6 +773,28 @@ func (p *Post) ReadField24(iprot thrift.TProtocol) error {
 	p.UserAvatarURL = _field
 	return nil
 }
+func (p *Post) ReadField32(iprot thrift.TProtocol) error {
+
+	var _field int64
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.CategoryID = _field
+	return nil
+}
+func (p *Post) ReadField33(iprot thrift.TProtocol) error {
+
+	var _field string
+	if v, err := iprot.ReadString(); err != nil {
+		return err
+	} else {
+		_field = v
+	}
+	p.CategoryName = _field
+	return nil
+}
 
 func (p *Post) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
@@ -848,6 +896,14 @@ func (p *Post) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField24(oprot); err != nil {
 			fieldId = 24
+			goto WriteFieldError
+		}
+		if err = p.writeField32(oprot); err != nil {
+			fieldId = 32
+			goto WriteFieldError
+		}
+		if err = p.writeField33(oprot); err != nil {
+			fieldId = 33
 			goto WriteFieldError
 		}
 	}
@@ -1302,6 +1358,40 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 24 end error: ", p), err)
 }
 
+func (p *Post) writeField32(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("category_id", thrift.I64, 32); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteI64(p.CategoryID); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 32 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 32 end error: ", p), err)
+}
+
+func (p *Post) writeField33(oprot thrift.TProtocol) (err error) {
+	if err = oprot.WriteFieldBegin("category_name", thrift.STRING, 33); err != nil {
+		goto WriteFieldBeginError
+	}
+	if err := oprot.WriteString(p.CategoryName); err != nil {
+		return err
+	}
+	if err = oprot.WriteFieldEnd(); err != nil {
+		goto WriteFieldEndError
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 33 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 33 end error: ", p), err)
+}
+
 func (p *Post) String() string {
 	if p == nil {
 		return "<nil>"
@@ -1693,16 +1783,17 @@ func (p *GetPostByIDResp) String() string {
 
 // create------------------------------------------------------------
 type CreatePostReq struct {
-	UserID   int64    `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
-	SchoolID int64    `thrift:"school_id,2" form:"school_id" json:"school_id" query:"school_id"`
-	Title    string   `thrift:"title,3" form:"title" json:"title" query:"title"`
-	Content  string   `thrift:"content,4" form:"content" json:"content" query:"content"`
-	Location *string  `thrift:"location,5,optional" form:"location" json:"location,omitempty" query:"location"`
-	Tags     []string `thrift:"tags,6,optional,list<string>" form:"tags" json:"tags,omitempty" query:"tags"`
+	UserID     int64    `thrift:"user_id,1" form:"user_id" json:"user_id" query:"user_id"`
+	SchoolID   int64    `thrift:"school_id,2" form:"school_id" json:"school_id" query:"school_id"`
+	Title      string   `thrift:"title,3" form:"title" json:"title" query:"title"`
+	Content    string   `thrift:"content,4" form:"content" json:"content" query:"content"`
+	CategoryID *int64   `thrift:"category_id,5,optional" form:"category_id" json:"category_id,omitempty" query:"category_id"`
+	Location   *string  `thrift:"location,6,optional" form:"location" json:"location,omitempty" query:"location"`
+	Tags       []string `thrift:"tags,7,optional,list<string>" form:"tags" json:"tags,omitempty" query:"tags"`
 	// 允许前端不传，后端默认 "text"
-	MediaType *string  `thrift:"media_type,7,optional" form:"media_type" json:"media_type,omitempty" query:"media_type"`
-	MediaUrls []string `thrift:"media_urls,8,optional,list<string>" form:"media_urls" json:"media_urls,omitempty" query:"media_urls"`
-	ReplyTo   *int64   `thrift:"reply_to,9,optional" form:"reply_to" json:"reply_to,omitempty" query:"reply_to"`
+	MediaType *string  `thrift:"media_type,8,optional" form:"media_type" json:"media_type,omitempty" query:"media_type"`
+	MediaUrls []string `thrift:"media_urls,9,optional,list<string>" form:"media_urls" json:"media_urls,omitempty" query:"media_urls"`
+	ReplyTo   *int64   `thrift:"reply_to,10,optional" form:"reply_to" json:"reply_to,omitempty" query:"reply_to"`
 }
 
 func NewCreatePostReq() *CreatePostReq {
@@ -1726,6 +1817,15 @@ func (p *CreatePostReq) GetTitle() (v string) {
 
 func (p *CreatePostReq) GetContent() (v string) {
 	return p.Content
+}
+
+var CreatePostReq_CategoryID_DEFAULT int64
+
+func (p *CreatePostReq) GetCategoryID() (v int64) {
+	if !p.IsSetCategoryID() {
+		return CreatePostReq_CategoryID_DEFAULT
+	}
+	return *p.CategoryID
 }
 
 var CreatePostReq_Location_DEFAULT string
@@ -1774,15 +1874,20 @@ func (p *CreatePostReq) GetReplyTo() (v int64) {
 }
 
 var fieldIDToName_CreatePostReq = map[int16]string{
-	1: "user_id",
-	2: "school_id",
-	3: "title",
-	4: "content",
-	5: "location",
-	6: "tags",
-	7: "media_type",
-	8: "media_urls",
-	9: "reply_to",
+	1:  "user_id",
+	2:  "school_id",
+	3:  "title",
+	4:  "content",
+	5:  "category_id",
+	6:  "location",
+	7:  "tags",
+	8:  "media_type",
+	9:  "media_urls",
+	10: "reply_to",
+}
+
+func (p *CreatePostReq) IsSetCategoryID() bool {
+	return p.CategoryID != nil
 }
 
 func (p *CreatePostReq) IsSetLocation() bool {
@@ -1857,7 +1962,7 @@ func (p *CreatePostReq) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 5:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.I64 {
 				if err = p.ReadField5(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1865,7 +1970,7 @@ func (p *CreatePostReq) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 6:
-			if fieldTypeId == thrift.LIST {
+			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField6(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1873,7 +1978,7 @@ func (p *CreatePostReq) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 7:
-			if fieldTypeId == thrift.STRING {
+			if fieldTypeId == thrift.LIST {
 				if err = p.ReadField7(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1881,7 +1986,7 @@ func (p *CreatePostReq) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 8:
-			if fieldTypeId == thrift.LIST {
+			if fieldTypeId == thrift.STRING {
 				if err = p.ReadField8(iprot); err != nil {
 					goto ReadFieldError
 				}
@@ -1889,8 +1994,16 @@ func (p *CreatePostReq) Read(iprot thrift.TProtocol) (err error) {
 				goto SkipFieldError
 			}
 		case 9:
-			if fieldTypeId == thrift.I64 {
+			if fieldTypeId == thrift.LIST {
 				if err = p.ReadField9(iprot); err != nil {
+					goto ReadFieldError
+				}
+			} else if err = iprot.Skip(fieldTypeId); err != nil {
+				goto SkipFieldError
+			}
+		case 10:
+			if fieldTypeId == thrift.I64 {
+				if err = p.ReadField10(iprot); err != nil {
 					goto ReadFieldError
 				}
 			} else if err = iprot.Skip(fieldTypeId); err != nil {
@@ -1971,6 +2084,17 @@ func (p *CreatePostReq) ReadField4(iprot thrift.TProtocol) error {
 }
 func (p *CreatePostReq) ReadField5(iprot thrift.TProtocol) error {
 
+	var _field *int64
+	if v, err := iprot.ReadI64(); err != nil {
+		return err
+	} else {
+		_field = &v
+	}
+	p.CategoryID = _field
+	return nil
+}
+func (p *CreatePostReq) ReadField6(iprot thrift.TProtocol) error {
+
 	var _field *string
 	if v, err := iprot.ReadString(); err != nil {
 		return err
@@ -1980,7 +2104,7 @@ func (p *CreatePostReq) ReadField5(iprot thrift.TProtocol) error {
 	p.Location = _field
 	return nil
 }
-func (p *CreatePostReq) ReadField6(iprot thrift.TProtocol) error {
+func (p *CreatePostReq) ReadField7(iprot thrift.TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return err
@@ -2003,7 +2127,7 @@ func (p *CreatePostReq) ReadField6(iprot thrift.TProtocol) error {
 	p.Tags = _field
 	return nil
 }
-func (p *CreatePostReq) ReadField7(iprot thrift.TProtocol) error {
+func (p *CreatePostReq) ReadField8(iprot thrift.TProtocol) error {
 
 	var _field *string
 	if v, err := iprot.ReadString(); err != nil {
@@ -2014,7 +2138,7 @@ func (p *CreatePostReq) ReadField7(iprot thrift.TProtocol) error {
 	p.MediaType = _field
 	return nil
 }
-func (p *CreatePostReq) ReadField8(iprot thrift.TProtocol) error {
+func (p *CreatePostReq) ReadField9(iprot thrift.TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return err
@@ -2037,7 +2161,7 @@ func (p *CreatePostReq) ReadField8(iprot thrift.TProtocol) error {
 	p.MediaUrls = _field
 	return nil
 }
-func (p *CreatePostReq) ReadField9(iprot thrift.TProtocol) error {
+func (p *CreatePostReq) ReadField10(iprot thrift.TProtocol) error {
 
 	var _field *int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -2089,6 +2213,10 @@ func (p *CreatePostReq) Write(oprot thrift.TProtocol) (err error) {
 		}
 		if err = p.writeField9(oprot); err != nil {
 			fieldId = 9
+			goto WriteFieldError
+		}
+		if err = p.writeField10(oprot); err != nil {
+			fieldId = 10
 			goto WriteFieldError
 		}
 	}
@@ -2178,11 +2306,11 @@ WriteFieldEndError:
 }
 
 func (p *CreatePostReq) writeField5(oprot thrift.TProtocol) (err error) {
-	if p.IsSetLocation() {
-		if err = oprot.WriteFieldBegin("location", thrift.STRING, 5); err != nil {
+	if p.IsSetCategoryID() {
+		if err = oprot.WriteFieldBegin("category_id", thrift.I64, 5); err != nil {
 			goto WriteFieldBeginError
 		}
-		if err := oprot.WriteString(*p.Location); err != nil {
+		if err := oprot.WriteI64(*p.CategoryID); err != nil {
 			return err
 		}
 		if err = oprot.WriteFieldEnd(); err != nil {
@@ -2197,8 +2325,27 @@ WriteFieldEndError:
 }
 
 func (p *CreatePostReq) writeField6(oprot thrift.TProtocol) (err error) {
+	if p.IsSetLocation() {
+		if err = oprot.WriteFieldBegin("location", thrift.STRING, 6); err != nil {
+			goto WriteFieldBeginError
+		}
+		if err := oprot.WriteString(*p.Location); err != nil {
+			return err
+		}
+		if err = oprot.WriteFieldEnd(); err != nil {
+			goto WriteFieldEndError
+		}
+	}
+	return nil
+WriteFieldBeginError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 6 begin error: ", p), err)
+WriteFieldEndError:
+	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
+}
+
+func (p *CreatePostReq) writeField7(oprot thrift.TProtocol) (err error) {
 	if p.IsSetTags() {
-		if err = oprot.WriteFieldBegin("tags", thrift.LIST, 6); err != nil {
+		if err = oprot.WriteFieldBegin("tags", thrift.LIST, 7); err != nil {
 			goto WriteFieldBeginError
 		}
 		if err := oprot.WriteListBegin(thrift.STRING, len(p.Tags)); err != nil {
@@ -2218,14 +2365,14 @@ func (p *CreatePostReq) writeField6(oprot thrift.TProtocol) (err error) {
 	}
 	return nil
 WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 6 begin error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 7 begin error: ", p), err)
 WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 6 end error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
 }
 
-func (p *CreatePostReq) writeField7(oprot thrift.TProtocol) (err error) {
+func (p *CreatePostReq) writeField8(oprot thrift.TProtocol) (err error) {
 	if p.IsSetMediaType() {
-		if err = oprot.WriteFieldBegin("media_type", thrift.STRING, 7); err != nil {
+		if err = oprot.WriteFieldBegin("media_type", thrift.STRING, 8); err != nil {
 			goto WriteFieldBeginError
 		}
 		if err := oprot.WriteString(*p.MediaType); err != nil {
@@ -2237,14 +2384,14 @@ func (p *CreatePostReq) writeField7(oprot thrift.TProtocol) (err error) {
 	}
 	return nil
 WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 7 begin error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 8 begin error: ", p), err)
 WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 7 end error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
 }
 
-func (p *CreatePostReq) writeField8(oprot thrift.TProtocol) (err error) {
+func (p *CreatePostReq) writeField9(oprot thrift.TProtocol) (err error) {
 	if p.IsSetMediaUrls() {
-		if err = oprot.WriteFieldBegin("media_urls", thrift.LIST, 8); err != nil {
+		if err = oprot.WriteFieldBegin("media_urls", thrift.LIST, 9); err != nil {
 			goto WriteFieldBeginError
 		}
 		if err := oprot.WriteListBegin(thrift.STRING, len(p.MediaUrls)); err != nil {
@@ -2264,14 +2411,14 @@ func (p *CreatePostReq) writeField8(oprot thrift.TProtocol) (err error) {
 	}
 	return nil
 WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 8 begin error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 9 begin error: ", p), err)
 WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 8 end error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
 }
 
-func (p *CreatePostReq) writeField9(oprot thrift.TProtocol) (err error) {
+func (p *CreatePostReq) writeField10(oprot thrift.TProtocol) (err error) {
 	if p.IsSetReplyTo() {
-		if err = oprot.WriteFieldBegin("reply_to", thrift.I64, 9); err != nil {
+		if err = oprot.WriteFieldBegin("reply_to", thrift.I64, 10); err != nil {
 			goto WriteFieldBeginError
 		}
 		if err := oprot.WriteI64(*p.ReplyTo); err != nil {
@@ -2283,9 +2430,9 @@ func (p *CreatePostReq) writeField9(oprot thrift.TProtocol) (err error) {
 	}
 	return nil
 WriteFieldBeginError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 9 begin error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 10 begin error: ", p), err)
 WriteFieldEndError:
-	return thrift.PrependError(fmt.Sprintf("%T write field 9 end error: ", p), err)
+	return thrift.PrependError(fmt.Sprintf("%T write field 10 end error: ", p), err)
 }
 
 func (p *CreatePostReq) String() string {

@@ -11,6 +11,9 @@ type PostBase struct {
 	ID        int64     `json:"id" gorm:"primaryKey;autoIncrement"`
 	UserID    int64     `json:"user_id"`
 	SchoolID  int64     `json:"school_id"`
+
+	CategoryID int64    `json:"category_id"`
+
 	Title     string    `json:"title" gorm:"type:varchar(255)"`
 	Content   string    `json:"content" gorm:"type:text"`
 
@@ -44,6 +47,7 @@ type Post struct {
 	PostStats
 
 	SchoolName    string `json:"school_name"`
+	CategoryName  string `json:"category_name"`
 	UserName      string `json:"user_name" gorm:"-"`
 	UserAvatarUrl string `json:"user_avatar_url" gorm:"-"`
 	IsLikedByUser bool   `json:"is_liked_by_user"`
@@ -89,6 +93,9 @@ func ToDomainPostBase(tp thrift.Post) PostBase {
 		ID:        tp.ID,
 		UserID:    tp.UserID,
 		SchoolID:  tp.SchoolID,
+
+		CategoryID: tp.CategoryID,
+
 		Title:     tp.Title,
 		Content:   tp.Content,
 		MediaType: tp.MediaType,
@@ -163,6 +170,7 @@ func CombineToThriftPost(
 	faved bool,
 	userName string,
 	UserAvatarUrl string,
+	CategoryMame string,
 ) thrift.Post {
 
 	var tags []string
@@ -176,6 +184,10 @@ func CombineToThriftPost(
 		// Base fields
 		ID:         base.ID,
 		UserID:     base.UserID,
+
+		CategoryID: base.CategoryID,
+		CategoryName: CategoryMame,
+
 		SchoolID:   base.SchoolID,
 		SchoolName: schoolName,
 		Title:      base.Title,
@@ -222,6 +234,7 @@ func DomainPostToThrift(p Post) thrift.Post {
 		p.IsFavByUser,
 		p.UserName,
 		p.UserAvatarUrl,
+		p.CategoryName,
 	)
 }
 

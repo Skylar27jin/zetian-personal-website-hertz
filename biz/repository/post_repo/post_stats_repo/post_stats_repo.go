@@ -42,6 +42,24 @@ func GetStats(ctx context.Context, postID int64) (*domain.PostStats, error) {
     return &stats, nil
 }
 
+func GetStatsBatch(ctx context.Context, postIDs []int64) (map[int64]*domain.PostStats, error) {
+	var statsList []*domain.PostStats
+	err := DB.DB.WithContext(ctx).
+		Where("post_id IN ?", postIDs).
+		Find(&statsList).Error
+	if err != nil {
+		return nil, err
+	}
+	statsMap := make(map[int64]*domain.PostStats)
+	for _, stats := range statsList {
+		if stats == nil {
+			continue
+		}
+		statsMap[int64(stats.PostID)] = stats
+	}
+	return statsMap, nil
+}
+
 
 // -----------------------------------------------------------------------------
 // Update

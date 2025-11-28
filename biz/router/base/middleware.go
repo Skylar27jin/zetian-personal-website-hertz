@@ -160,3 +160,13 @@ func _updateavatarMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _categoryMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getallcategoriesMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

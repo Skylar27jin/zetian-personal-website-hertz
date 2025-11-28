@@ -30,10 +30,11 @@ struct Post {
     21: i64 last_comment_at,       // timestamp of last comment
     22: i64 hot_score,             // sort score for hot posts
 
-    23: optional string user_name,  // 新增
-    24: optional string user_avatar_url, // 新增
+    23: optional string user_name,
+    24: optional string user_avatar_url,
 
-
+    32: i64 category_id,
+    33: string category_name,
 }
 
 //get--------------------------------------------------------------
@@ -54,11 +55,13 @@ struct CreatePostReq {
     3: string title,
     4: string content,
 
-    5: optional string location,
-    6: optional list<string> tags,
-    7: optional string media_type,    // 允许前端不传，后端默认 "text"
-    8: optional list<string> media_urls,
-    9: optional i64 reply_to,
+    5: optional i64 category_id,
+
+    6: optional string location,
+    7: optional list<string> tags,
+    8: optional string media_type,    // 允许前端不传，后端默认 "text"
+    9: optional list<string> media_urls,
+    10: optional i64 reply_to,
 }
 
 struct CreatePostResp {

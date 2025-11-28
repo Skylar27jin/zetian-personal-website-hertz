@@ -9,6 +9,7 @@ import (
 	"time"
 
 	"zetian-personal-website-hertz/biz/domain"
+	"zetian-personal-website-hertz/biz/repository/category_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_base_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_fav_repo"
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_like_repo"
@@ -38,6 +39,7 @@ func CreatePost(
 	ctx context.Context,
 	userID int64,
 	schoolID int64,
+	categoryID int64,
 	title string,
 	content string,
 	mediaType string,
@@ -61,6 +63,7 @@ func CreatePost(
 	base := &domain.PostBase{
 		UserID:    userID,
 		SchoolID:  schoolID,
+		CategoryID: categoryID,
 		Title:     title,
 		Content:   content,
 		MediaType: mediaType,
@@ -569,20 +572,24 @@ func parseBeforeTime(beforeStr string) (time.Time, error) {
 	// fallback to RFC3339
 	return time.Parse(time.RFC3339, beforeStr)
 }
+
+
 // buildPostLists:
-//   - Input: []PostBase
+//   - Input:  []PostBase（已经按时间或其他方式分页好）
 //   - Output: []Post with:
-//       * base fields
-//       * stats from post_stats
-//       * school_name
-//       * user_name
-//       * IsLikedByUser / IsFavByUser for given viewer
+//       * base fields (PostBase)
+//       * aggregated stats from post_stats（批量查询）
+//       * school_name      （从学校缓存）
+//       * category_name    （从板块缓存）
+//       * user_name + avatar（批量查用户表）
+//       * IsLikedByUser / IsFavByUser for given viewer（批量查 like/fav）
 //
 // Implementation details:
-//   - Stats are loaded by looping GetStats per post (N is usually small, e.g. 10/20).
-//   - Schools are loaded in a single call from in-memory cache.
-//   - Users are loaded in batch by user IDs.
-//   - Viewer interactions are loaded in batch via GetUserLikedPostIDs / GetUserFavoritedPostIDs.
+//   - Stats 使用 GetStatsByPostIDs 一次性批量查询，避免 N 次 DB round-trip。
+//   - Schools / Categories 从内存缓存获取（school_repo / category_repo）。
+//   - Users 使用 GetUsersByIDs 批量查询 DB。
+//   - Viewer interactions 使用 GetUserLikedPostIDs / GetUserFavoritedPostIDs 批量查询。
+//   - 所有外部依赖通过 goroutine 并行拉取，用 WaitGroup + errChan 同步错误。
 func buildPostLists(
 	ctx context.Context,
 	bases []domain.PostBase,
@@ -592,12 +599,14 @@ func buildPostLists(
 		return []domain.Post{}, nil
 	}
 
-	// Collect postIDs / schoolIDs / userIDs (deduplicated)
+	// Collect postIDs / schoolIDs / categoryIDs / userIDs (deduplicated)
 	postIDs := make([]int64, 0, len(bases))
 	schoolIDs := make([]int64, 0, len(bases))
+	categoryIDs := make([]int64, 0, len(bases))
 	userIDs := make([]int64, 0, len(bases))
 
 	schoolIDSet := make(map[int64]struct{})
+	categoryIDSet := make(map[int64]struct{})
 	userIDSet := make(map[int64]struct{})
 
 	for _, b := range bases {
@@ -610,6 +619,13 @@ func buildPostLists(
 			}
 		}
 
+		if b.CategoryID != 0 {
+			if _, ok := categoryIDSet[b.CategoryID]; !ok {
+				categoryIDSet[b.CategoryID] = struct{}{}
+				categoryIDs = append(categoryIDs, b.CategoryID)
+			}
+		}
+
 		if b.UserID != 0 {
 			if _, ok := userIDSet[b.UserID]; !ok {
 				userIDSet[b.UserID] = struct{}{}
@@ -619,37 +635,30 @@ func buildPostLists(
 	}
 
 	var (
-		statsMap  map[int64]*domain.PostStats
-		schoolMap map[int64]*domain.School
-		userMap   map[int64]*domain.User
-		likedSet  map[int64]bool
-		favSet    map[int64]bool
+		statsMap    map[int64]*domain.PostStats
+		schoolMap   map[int64]*domain.School
+		categoryMap map[int64]*domain.Category
+		userMap     map[int64]*domain.User
+		likedSet    map[int64]bool
+		favSet      map[int64]bool
 	)
 
 	var wg sync.WaitGroup
-	errChan := make(chan error, 5)
+	errChan := make(chan error, 6)
 
-	// 1) load stats for each post (simple loop; N typically small)
+	// 1) batch stats
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
-		m := make(map[int64]*domain.PostStats, len(postIDs))
-		for _, pid := range postIDs {
-			s, err := post_stats_repo.GetStats(ctx, pid)
-			if err != nil {
-				if errors.Is(err, gorm.ErrRecordNotFound) {
-					m[pid] = &domain.PostStats{PostID: pid}
-					continue
-				}
-				errChan <- fmt.Errorf("get stats for post %d: %w", pid, err)
-				return
-			}
-			m[pid] = s
+		m, err := post_stats_repo.GetStatsBatch(ctx, postIDs)
+		if err != nil {
+			errChan <- fmt.Errorf("get stats batch: %w", err)
+			return
 		}
 		statsMap = m
 	}()
 
-	// 2) load schools from cache
+	// 2) schools from cache
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -661,7 +670,23 @@ func buildPostLists(
 		schoolMap = m
 	}()
 
-	// 3) load users in batch
+	// 3) categories from cache
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+		if len(categoryIDs) == 0 {
+			categoryMap = map[int64]*domain.Category{}
+			return
+		}
+		m, err := category_repo.GetCategoriesByIDsInCache(categoryIDs)
+		if err != nil {
+			errChan <- fmt.Errorf("get categories from cache: %w", err)
+			return
+		}
+		categoryMap = m
+	}()
+
+	// 4) users in batch
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -677,12 +702,11 @@ func buildPostLists(
 		userMap = m
 	}()
 
-	// 4) viewer liked set
+	// 5) viewer liked set
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
 		if viewerID <= 0 {
-			// anonymous or no viewer; skip
 			likedSet = map[int64]bool{}
 			return
 		}
@@ -694,7 +718,7 @@ func buildPostLists(
 		likedSet = m
 	}()
 
-	// 5) viewer favorited set
+	// 6) viewer favorited set
 	wg.Add(1)
 	go func() {
 		defer wg.Done()
@@ -721,7 +745,7 @@ func buildPostLists(
 	// Compose final result
 	res := make([]domain.Post, 0, len(bases))
 	for _, b := range bases {
-		// stats
+		// stats（批量已经帮你补好了不存在的，正常情况下不会为 nil）
 		s := statsMap[b.ID]
 		if s == nil {
 			s = &domain.PostStats{PostID: b.ID}
@@ -737,20 +761,31 @@ func buildPostLists(
 			}
 		}
 
-		// user_name
+		// category_name
+		categoryName := ""
+		if cat, ok := categoryMap[b.CategoryID]; ok && cat != nil {
+			categoryName = cat.Name
+		}
+
+		// user_name / avatar
 		userName := ""
-		if u, ok := userMap[b.UserID]; ok && u != nil && u.Username != "" {
-			userName = u.Username
+		userAvatarURL := ""
+		if u, ok := userMap[b.UserID]; ok && u != nil {
+			if u.Username != "" {
+				userName = u.Username
+			}
+			userAvatarURL = u.AvatarUrl
 		}
 
 		res = append(res, domain.Post{
 			PostBase:      b,
 			PostStats:     *s,
 			SchoolName:    schoolName,
+			CategoryName:  categoryName,
 			UserName:      userName,
+			UserAvatarUrl: userAvatarURL,
 			IsLikedByUser: likedSet[b.ID],
 			IsFavByUser:   favSet[b.ID],
-			UserAvatarUrl: userMap[b.UserID].AvatarUrl,
 		})
 	}
 	return res, nil
