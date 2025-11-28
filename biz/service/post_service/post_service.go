@@ -750,6 +750,7 @@ func buildPostLists(
 			UserName:      userName,
 			IsLikedByUser: likedSet[b.ID],
 			IsFavByUser:   favSet[b.ID],
+			UserAvatarUrl: userMap[b.UserID].AvatarUrl,
 		})
 	}
 	return res, nil
