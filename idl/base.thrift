@@ -67,3 +67,8 @@ service SchoolService {
 service CategoryService {
     category.GetAllCategoriesResp GetAllCategories(1: category.GetAllCategoriesReq request) (api.get="/category/all");
 }
+
+
+//Time format:
+//RFC3339
+//2025-11-03T05:59:09.392415Z

@@ -120,6 +120,19 @@ struct GetPersonalRecentPostsResp {
     4: map<i64, Post> quoted_posts; 
 }
 
+struct GetFollowingUsersRecentPostsReq {
+    1: i64 user_id;
+    2: string before;
+    3: i32 limit;
+}
+
+struct GetFollowingUsersRecentPostsResp {
+    1: bool isSuccessful;
+    2: string errorMessage;
+    3: list<Post> posts;
+    4: map<i64, Post> quoted_posts; 
+}
+
 struct LikePostReq {
     1: i64 post_id;
 }

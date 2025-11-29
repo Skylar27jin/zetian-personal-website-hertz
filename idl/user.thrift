@@ -26,9 +26,65 @@ struct UserProfile {
     6: i64 postLikeReceivedCount;
 
     7: bool isFollowing; 
-    8: bool isMe;        
+    8: bool isMe;
+    9: bool followedYou;        
 }
 
+struct SimpleUserProfile {
+    1: i64    id;
+    2: string userName;
+    3: string avatarUrl;
+
+    4: bool isFollowing; 
+    5: bool isMe;
+    6: bool followedYou; 
+}
+
+/**
+ * List users who FOLLOW the target user.
+ *
+ * - viewer is taken from JWT (for isFollowing / followedYou / isMe).
+ * - targetUserId: whose followers we are listing.
+ * - cursor: opaque offset/cursor for pagination (0 or missing = first page).
+ * - limit: page size (optional, server may cap it, e.g. 20).
+ */
+struct ListFollowersReq {
+    1: i64 targetUserId (api.query = "user_id");
+    2: i64 cursor       (api.query = "cursor");   // optional, 0 for first page
+    3: i32 limit        (api.query = "limit");    // optional, default by server
+}
+
+struct ListFollowersResp {
+    1: bool   isSuccessful;
+    2: string errorMessage;
+    // Followers of targetUserId
+    3: list<SimpleUserProfile> users;
+    // Pagination info
+    4: i64  nextCursor;   // 0 when no more data
+    5: bool hasMore;
+}
+
+/**
+ * List users that the target user is FOLLOWING.
+ *
+ * - viewer is taken from JWT.
+ * - targetUserId: whose "following" list we are listing.
+ */
+struct ListFollowingReq {
+    1: i64 targetUserId (api.query = "user_id");
+    2: i64 cursor       (api.query = "cursor");   // optional, 0 for first page
+    3: i32 limit        (api.query = "limit");    // optional, default by server
+}
+
+struct ListFollowingResp {
+    1: bool   isSuccessful;
+    2: string errorMessage;
+    // People that targetUserId is following
+    3: list<SimpleUserProfile> users;
+    // Pagination info
+    4: i64  nextCursor;   // 0 when no more data
+    5: bool hasMore;
+}
 
 // ===============================
 // Get User Info API

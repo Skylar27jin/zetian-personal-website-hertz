@@ -39,11 +39,19 @@ func GetUserProfile(ctx context.Context, viewerID, targetUserID int64) (*domain.
             isFollowing = follow
         }
     }
+	// 4) determine whether viewer follows this user
+	followedYou := false
+	if viewerID > 0 && viewerID != targetUserID {
+		follow, err := user_follow_repo.IsFollowing(ctx, targetUserID, viewerID)
+		if err == nil {
+			followedYou = follow
+		}
+	}
 
-    // 4) Determine isMe
+    // 5) Determine isMe
     isMe := viewerID == targetUserID
 
-    // 5) Compose UserProfile
+    // 6) Compose UserProfile
     profile := &domain.UserProfile{
         Id:                    int64(user.ID),
         UserName:              user.Username,
@@ -52,6 +60,7 @@ func GetUserProfile(ctx context.Context, viewerID, targetUserID int64) (*domain.
         FollowingCount:        stats.FollowingCount,
         PostLikeReceivedCount: stats.PostLikeReceivedCount,
         IsFollowing:           isFollowing,
+		FollowedYou:           followedYou,
         IsMe:                  isMe,
     }
 

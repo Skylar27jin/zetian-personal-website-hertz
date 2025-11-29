@@ -346,6 +346,7 @@ func UpdateAvatar(ctx context.Context, c *app.RequestContext) {
 		AvatarUrl:    avatarURL,
 	})
 }
+
 // FollowUser .
 // @router /user/follow [POST]
 func FollowUser(ctx context.Context, c *app.RequestContext) {
@@ -497,6 +498,7 @@ func GetUserProfile(ctx context.Context, c *app.RequestContext) {
 		FollowingCount:        profile.FollowingCount,
 		PostLikeReceivedCount: profile.PostLikeReceivedCount,
 		IsFollowing:           profile.IsFollowing,
+		FollowedYou:           profile.FollowedYou,
 		IsMe:                  profile.IsMe,
 	}
 

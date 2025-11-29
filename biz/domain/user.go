@@ -41,5 +41,6 @@ type UserProfile struct {
     PostLikeReceivedCount int64
 
     IsFollowing bool
+    FollowedYou bool
     IsMe bool  
 }
