@@ -52,8 +52,11 @@ func Register(r *server.Hertz) {
 	}
 	{
 		_user := root.Group("/user", _userMw()...)
+		_user.POST("/follow", append(_followuserMw(), base.FollowUser)...)
 		_user.GET("/get", append(_getuserMw(), base.GetUser)...)
+		_user.GET("/profile", append(_getuserprofileMw(), base.GetUserProfile)...)
 		_user.POST("/reset-password", append(_resetpasswordMw(), base.ResetPassword)...)
+		_user.POST("/unfollow", append(_unfollowuserMw(), base.UnfollowUser)...)
 		_user.POST("/update-avatar", append(_updateavatarMw(), base.UpdateAvatar)...)
 	}
 	{

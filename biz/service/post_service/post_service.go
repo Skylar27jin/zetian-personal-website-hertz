@@ -16,6 +16,7 @@ import (
 	"zetian-personal-website-hertz/biz/repository/post_repo/post_stats_repo"
 	"zetian-personal-website-hertz/biz/repository/school_repo"
 	"zetian-personal-website-hertz/biz/repository/user_repo"
+	"zetian-personal-website-hertz/biz/repository/user_stats_repo"
 
 	"gorm.io/gorm"
 )
@@ -166,7 +167,7 @@ func EditPost(
 //   - post_stats row is expected to be deleted by FK cascade.
 func DeletePost(ctx context.Context, userID, postID int64) error {
 	var wg sync.WaitGroup
-	errChan := make(chan error, 2)
+	errChan := make(chan error, 3)
 
 	// 1) delete likes
 	wg.Add(1)
@@ -186,6 +187,43 @@ func DeletePost(ctx context.Context, userID, postID int64) error {
 		}
 	}()
 
+	// 3) decrement author's received-like count
+	wg.Add(1)
+	go func() {
+		defer wg.Done()
+
+		// 3.1 拿 stats（like_count）
+		stats, err := post_stats_repo.GetStats(ctx, postID)
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				errChan <- fmt.Errorf("get post stats: %w", err)
+			}
+			// 如果没有 stats 记录，直接返回即可
+			return
+		}
+		if stats.LikeCount == 0 {
+			// 没有点赞，不用减
+			return
+		}
+
+		// 3.2 拿作者 id
+		base, err := post_base_repo.GetPostBaseByID(ctx, postID)
+		if err != nil {
+			if !errors.Is(err, gorm.ErrRecordNotFound) {
+				errChan <- fmt.Errorf("get post base: %w", err)
+			}
+			return
+		}
+		authorID := base.UserID
+
+		// 3.3 给作者的「收到的点赞数」减去该帖子的点赞数
+		if err := user_stats_repo.
+			IncrementPostLikeReceived(ctx, authorID, -int64(stats.LikeCount)); err != nil {
+			errChan <- fmt.Errorf("decrement user received likes: %w", err)
+			return
+		}
+	}()
+
 	wg.Wait()
 	close(errChan)
 	for err := range errChan {
@@ -194,7 +232,7 @@ func DeletePost(ctx context.Context, userID, postID int64) error {
 		}
 	}
 
-	// 3) delete post base (ownership enforced)
+	// 4) delete post base (ownership enforced)
 	if err := post_base_repo.DeletePostBase(ctx, userID, postID); err != nil {
 		if errors.Is(err, gorm.ErrRecordNotFound) {
 			// upper layer (handler) can map this to 404 or "no permission"
@@ -467,6 +505,10 @@ func LikePost(ctx context.Context, userID, postID int64) error {
 	// Increment like_count (best-effort)
 	_ = post_stats_repo.IncrementLike(ctx, postID, 1)
 
+
+	// Increment author's received-like count (best-effort)
+	_ = user_stats_repo.IncrementPostLikeReceived(ctx, int64(userID), 1)
+
 	return nil
 }
 
@@ -494,6 +536,9 @@ func UnlikePost(ctx context.Context, userID, postID int64) error {
 
 	// Decrement like_count (best-effort)
 	_ = post_stats_repo.IncrementLike(ctx, postID, -1)
+
+	// Decrement author's received-like count (best-effort)
+	_ = user_stats_repo.IncrementPostLikeReceived(ctx, int64(userID), -1)
 
 	return nil
 }

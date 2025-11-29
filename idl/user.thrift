@@ -1,5 +1,85 @@
 namespace go user
 
+// ===============================
+// User public profile view
+// ===============================
+
+/**
+ * Public user profile returned to the client.
+ * This combines:
+ *   - User.ID
+ *   - User.Username
+ *   - User.AvatarUrl
+ *   - UserStats (followers, following, likes received)
+ *
+ * Extra fields:
+ *   - isFollowing: whether the viewer already follows this user
+ *   - isMe: whether the viewer is viewing their own profile
+ */
+struct UserProfile {
+    1: i64    id;
+    2: string userName;
+    3: string avatarUrl;
+
+    4: i64 followersCount;
+    5: i64 followingCount;
+    6: i64 postLikeReceivedCount;
+
+    7: bool isFollowing; 
+    8: bool isMe;        
+}
+
+
+// ===============================
+// Get User Info API
+// ===============================
+
+/**
+ * Request user information (public profile + stats).
+ * The authenticated user (viewer) is determined by JWT,
+ * and does not need to be passed here.
+ */
+struct GetUserProfileReq {
+    1: i64 id (api.query = "id");
+}
+
+struct GetUserProfileResp {
+    1: bool   isSuccessful;
+    2: string errorMessage;
+    3: UserProfile user;
+}
+
+
+// ===============================
+// Follow / Unfollow APIs
+// ===============================
+
+/**
+ * Follow another user.
+ * viewerID (the follower) is taken from JWT.
+ */
+struct FollowUserReq {
+    1: i64 targetUserId (api.query = "id");
+}
+
+struct FollowUserResp {
+    1: bool   isSuccessful;
+    2: string errorMessage;
+}
+
+/**
+ * Unfollow another user.
+ * viewerID comes from JWT.
+ */
+struct UnfollowUserReq {
+    1: i64 targetUserId (api.query = "id");
+}
+
+struct UnfollowUserResp {
+    1: bool   isSuccessful;
+    2: string errorMessage;
+}
+
 
 struct LoginReq {
     1: string email (api.body="email");

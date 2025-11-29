@@ -346,3 +346,164 @@ func UpdateAvatar(ctx context.Context, c *app.RequestContext) {
 		AvatarUrl:    avatarURL,
 	})
 }
+// FollowUser .
+// @router /user/follow [POST]
+func FollowUser(ctx context.Context, c *app.RequestContext) {
+	var req user.FollowUserReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 1. parse JWT, must be logged in
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, userID, err := authService.ParseUserJWT(ctx, jwtStr)
+	if err != nil || exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, user.FollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "unauthorized, please login first",
+		})
+		return
+	}
+
+	targetID := req.GetTargetUserId()
+	if targetID <= 0 {
+		c.JSON(consts.StatusBadRequest, user.FollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "invalid target user id",
+		})
+		return
+	}
+	if targetID == userID {
+		c.JSON(consts.StatusBadRequest, user.FollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "you cannot follow yourself",
+		})
+		return
+	}
+
+	// 2. call service
+	if err := userService.FollowUser(ctx, userID, targetID); err != nil {
+		c.JSON(consts.StatusBadRequest, user.FollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	// 3. success
+	c.JSON(consts.StatusOK, user.FollowUserResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+	})
+}
+
+// UnfollowUser .
+// @router /user/unfollow [POST]
+func UnfollowUser(ctx context.Context, c *app.RequestContext) {
+	var req user.UnfollowUserReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	// 1. parse JWT, must be logged in
+	jwtStr := string(c.Cookie("JWT"))
+	_, _, _, exp, userID, err := authService.ParseUserJWT(ctx, jwtStr)
+	if err != nil || exp < time.Now().Unix() {
+		c.JSON(consts.StatusUnauthorized, user.UnfollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "unauthorized, please login first",
+		})
+		return
+	}
+
+	targetID := req.GetTargetUserId()
+	if targetID <= 0 {
+		c.JSON(consts.StatusBadRequest, user.UnfollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "invalid target user id",
+		})
+		return
+	}
+	if targetID == userID {
+		c.JSON(consts.StatusBadRequest, user.UnfollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: "you cannot unfollow yourself",
+		})
+		return
+	}
+
+	// 2. call service
+	if err := userService.UnfollowUser(ctx, userID, targetID); err != nil {
+		c.JSON(consts.StatusBadRequest, user.UnfollowUserResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	// 3. success
+	c.JSON(consts.StatusOK, user.UnfollowUserResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+	})
+}
+
+// GetUserProfile .
+// @router /user/profile [GET]
+func GetUserProfile(ctx context.Context, c *app.RequestContext) {
+	var req user.GetUserProfileReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	targetID := req.GetID()
+	if targetID <= 0 {
+		c.JSON(consts.StatusBadRequest, user.GetUserProfileResp{
+			IsSuccessful: false,
+			ErrorMessage: "invalid target user id",
+		})
+		return
+	}
+
+	// viewerID is optional: if JWT ok -> real user, otherwise treat as guest (0)
+	var viewerID int64 = 0
+	if jwtBytes := c.Cookie("JWT"); len(jwtBytes) > 0 {
+		jwtStr := string(jwtBytes)
+		_, _, _, exp, uid, err := authService.ParseUserJWT(ctx, jwtStr)
+		if err == nil && exp >= time.Now().Unix() {
+			viewerID = uid
+		}
+	}
+
+	// 1. call service to build profile
+	profile, err := userService.GetUserProfile(ctx, viewerID, targetID)
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, user.GetUserProfileResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	// 2. map domain.UserProfile -> thrift user.UserProfile
+	respUser := &user.UserProfile{
+		ID:                    profile.Id,
+		UserName:              profile.UserName,
+		AvatarUrl:             profile.AvatarUrl,
+		FollowersCount:        profile.FollowersCount,
+		FollowingCount:        profile.FollowingCount,
+		PostLikeReceivedCount: profile.PostLikeReceivedCount,
+		IsFollowing:           profile.IsFollowing,
+		IsMe:                  profile.IsMe,
+	}
+
+	// 3. success
+	c.JSON(consts.StatusOK, user.GetUserProfileResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		User:         respUser,
+	})
+}

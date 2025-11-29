@@ -14,6 +14,10 @@ service UserService {
     user.GetUserResp GetUser(1: user.GetUserReq request) (api.get="/user/get");
     user.ResetPasswordResp ResetPassword(1: user.ResetPasswordReq request) (api.post="/user/reset-password");
     user.UpdateAvatarResp UpdateAvatar(1: user.UpdateAvatarReq request) (api.post="/user/update-avatar");
+
+    user.FollowUserResp FollowUser(1: user.FollowUserReq request) (api.post="/user/follow");
+    user.UnfollowUserResp UnfollowUser(1: user.UnfollowUserReq request) (api.post="/user/unfollow");
+    user.GetUserProfileResp GetUserProfile(1: user.GetUserProfileReq request) (api.get="/user/profile");
 }
 
 service NumberOperationService {

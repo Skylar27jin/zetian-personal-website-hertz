@@ -170,3 +170,18 @@ func _getallcategoriesMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _followuserMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getuserprofileMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _unfollowuserMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
