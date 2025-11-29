@@ -509,3 +509,121 @@ func GetUserProfile(ctx context.Context, c *app.RequestContext) {
 		User:         respUser,
 	})
 }
+
+// GetFollowees .
+// @router /user/followees [GET]
+func GetFollowees(ctx context.Context, c *app.RequestContext) {
+	var req user.GetFolloweesReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	targetID := req.GetTargetUserId()
+	if targetID <= 0 {
+		c.JSON(consts.StatusBadRequest, user.GetFolloweesResp{
+			IsSuccessful: false,
+			ErrorMessage: "invalid target user id",
+		})
+		return
+	}
+
+	// viewer 可选：有 JWT 就用，没有就当 guest（viewerID = 0）
+	var viewerID int64 = 0
+	if jwtBytes := c.Cookie("JWT"); len(jwtBytes) > 0 {
+		jwtStr := string(jwtBytes)
+		_, _, _, exp, uid, err := authService.ParseUserJWT(ctx, jwtStr)
+		if err == nil && exp >= time.Now().Unix() {
+			viewerID = uid
+		}
+	}
+
+	// 调用 service
+	result, err := userService.GetFollowees(ctx, viewerID, targetID, req.GetCursor(), req.GetLimit())
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, user.GetFolloweesResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	// domain.SimpleUserProfile -> thrift user.SimpleUserProfile
+	users := make([]*user.SimpleUserProfile, 0, len(result.Users))
+	for _, u := range result.Users {
+		users = append(users, &user.SimpleUserProfile{
+			ID:          u.Id,
+			UserName:    u.UserName,
+			AvatarUrl:   u.AvatarUrl,
+			IsFollowing: u.IsFollowing,
+			FollowedYou: u.FollowedYou,
+			IsMe:        u.IsMe,
+		})
+	}
+
+	c.JSON(consts.StatusOK, user.GetFolloweesResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		Users:        users,
+		NextCursor:   result.NextCursor,
+		HasMore:      result.HasMore,
+	})
+}
+
+// GetFollowers .
+// @router /user/followers [GET]
+func GetFollowers(ctx context.Context, c *app.RequestContext) {
+	var req user.GetFollowersReq
+	if err := c.BindAndValidate(&req); err != nil {
+		c.String(consts.StatusBadRequest, err.Error())
+		return
+	}
+
+	targetID := req.GetTargetUserId()
+	if targetID <= 0 {
+		c.JSON(consts.StatusBadRequest, user.GetFollowersResp{
+			IsSuccessful: false,
+			ErrorMessage: "invalid target user id",
+		})
+		return
+	}
+
+	// viewer 同样可选
+	var viewerID int64 = 0
+	if jwtBytes := c.Cookie("JWT"); len(jwtBytes) > 0 {
+		jwtStr := string(jwtBytes)
+		_, _, _, exp, uid, err := authService.ParseUserJWT(ctx, jwtStr)
+		if err == nil && exp >= time.Now().Unix() {
+			viewerID = uid
+		}
+	}
+
+	result, err := userService.GetFollowers(ctx, viewerID, targetID, req.GetCursor(), req.GetLimit())
+	if err != nil {
+		c.JSON(consts.StatusInternalServerError, user.GetFollowersResp{
+			IsSuccessful: false,
+			ErrorMessage: err.Error(),
+		})
+		return
+	}
+
+	users := make([]*user.SimpleUserProfile, 0, len(result.Users))
+	for _, u := range result.Users {
+		users = append(users, &user.SimpleUserProfile{
+			ID:          u.Id,
+			UserName:    u.UserName,
+			AvatarUrl:   u.AvatarUrl,
+			IsFollowing: u.IsFollowing,
+			FollowedYou: u.FollowedYou,
+			IsMe:        u.IsMe,
+		})
+	}
+
+	c.JSON(consts.StatusOK, user.GetFollowersResp{
+		IsSuccessful: true,
+		ErrorMessage: "",
+		Users:        users,
+		NextCursor:   result.NextCursor,
+		HasMore:      result.HasMore,
+	})
+}

@@ -44,3 +44,13 @@ type UserProfile struct {
     FollowedYou bool
     IsMe bool  
 }
+
+type SimpleUserProfile struct {
+    Id int64
+    UserName string
+    AvatarUrl string
+
+    IsFollowing bool
+    FollowedYou bool
+    IsMe bool  
+}

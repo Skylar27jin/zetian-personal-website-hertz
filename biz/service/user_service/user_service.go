@@ -4,11 +4,12 @@ import (
 	"context"
 	"errors"
 	"fmt"
+	"log"
 	"zetian-personal-website-hertz/biz/domain"
 	"zetian-personal-website-hertz/biz/pkg/crypto"
+	"zetian-personal-website-hertz/biz/repository/user_follow_repo"
 	"zetian-personal-website-hertz/biz/repository/user_repo"
 	"zetian-personal-website-hertz/biz/repository/user_stats_repo"
-	"zetian-personal-website-hertz/biz/repository/user_follow_repo"
 
 	"gorm.io/gorm"
 )
@@ -280,6 +281,181 @@ func UnfollowUser(ctx context.Context, followerID, followeeID int64) error {
 	_ = user_stats_repo.IncrementFollowing(ctx, followerID, -1)
 
 	return nil
+}
+
+const (
+	defaultFollowListLimit = 20
+	maxFollowListLimit     = 50
+)
+
+type FollowListResult struct {
+	Users      []domain.SimpleUserProfile
+	NextCursor int64
+	HasMore    bool
+}
+
+// GetFollowers 返回「targetUserID 的粉丝列表」（谁 follow 了 ta）
+func GetFollowers(
+	ctx context.Context,
+	viewerID int64,
+	targetUserID int64,
+	cursor int64,
+	limit int32,
+) (*FollowListResult, error) {
+	if targetUserID <= 0 {
+		return nil, errors.New("invalid target user id")
+	}
+
+	if limit <= 0 {
+		limit = defaultFollowListLimit
+	}
+	if limit > maxFollowListLimit {
+		limit = maxFollowListLimit
+	}
+
+	// 1. 从 follow 表分页查出 follower 记录
+	records, nextCursor, hasMore, err :=
+		user_follow_repo.ListFollowers(ctx, targetUserID, cursor, int(limit))
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return &FollowListResult{
+			Users:      []domain.SimpleUserProfile{},
+			NextCursor: 0,
+			HasMore:    false,
+		}, nil
+	}
+
+	// 2. 收集 follower 的 userID
+	ids := make([]int64, 0, len(records))
+	for _, r := range records {
+		ids = append(ids, r.FollowerID)
+	}
+
+	// 3. 批量拉用户基本信息
+	userMap, err := user_repo.GetUsersByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. 批量判断关系：viewer -> others / others -> viewer
+	followingMap, err := user_follow_repo.BatchIsFollowing(ctx, viewerID, ids)
+	if err != nil {
+		log.Printf("BatchIsFollowing error: %v", err)
+	}
+	followedByMap, err := user_follow_repo.BatchIsFollowedBy(ctx, viewerID, ids)
+	if err != nil {
+		log.Printf("BatchIsFollowedBy error: %v", err)
+	}
+
+	// 5. 组装 SimpleUserProfile（保持和 records 顺序一致）
+	result := make([]domain.SimpleUserProfile, 0, len(records))
+	for _, r := range records {
+		uid := r.FollowerID
+		u, ok := userMap[uid]
+		if !ok || u == nil {
+			continue
+		}
+
+		sp := domain.SimpleUserProfile{
+			Id:         uid,
+			UserName:   u.Username,
+			AvatarUrl:  u.AvatarUrl,
+			IsFollowing: followingMap[uid],  // viewer -> uid
+			FollowedYou: followedByMap[uid], // uid -> viewer
+			IsMe:        viewerID != 0 && viewerID == uid,
+		}
+		result = append(result, sp)
+	}
+
+	return &FollowListResult{
+		Users:      result,
+		NextCursor: nextCursor,
+		HasMore:    hasMore,
+	}, nil
+}
+
+// GetFollowees 返回「targetUserID 关注的人列表」（ta follow 了谁）
+func GetFollowees(
+	ctx context.Context,
+	viewerID int64,
+	targetUserID int64,
+	cursor int64,
+	limit int32,
+) (*FollowListResult, error) {
+	if targetUserID <= 0 {
+		return nil, errors.New("invalid target user id")
+	}
+
+	if limit <= 0 {
+		limit = defaultFollowListLimit
+	}
+	if limit > maxFollowListLimit {
+		limit = maxFollowListLimit
+	}
+
+	// 1. follow 表分页查出 followee 记录
+	records, nextCursor, hasMore, err :=
+		user_follow_repo.ListFollowees(ctx, targetUserID, cursor, int(limit))
+	if err != nil {
+		return nil, err
+	}
+	if len(records) == 0 {
+		return &FollowListResult{
+			Users:      []domain.SimpleUserProfile{},
+			NextCursor: 0,
+			HasMore:    false,
+		}, nil
+	}
+
+	// 2. 收集 followee 的 userID
+	ids := make([]int64, 0, len(records))
+	for _, r := range records {
+		ids = append(ids, r.FolloweeID)
+	}
+
+	// 3. 批量拉用户基本信息
+	userMap, err := user_repo.GetUsersByIDs(ctx, ids)
+	if err != nil {
+		return nil, err
+	}
+
+	// 4. 批量判断关系
+	followingMap, err := user_follow_repo.BatchIsFollowing(ctx, viewerID, ids)
+	if err != nil {
+		log.Printf("BatchIsFollowing error: %v", err)
+	}
+	followedByMap, err := user_follow_repo.BatchIsFollowedBy(ctx, viewerID, ids)
+	if err != nil {
+		log.Printf("BatchIsFollowedBy error: %v", err)
+	}
+
+	// 5. 组装 SimpleUserProfile，保证顺序
+	result := make([]domain.SimpleUserProfile, 0, len(records))
+	for _, r := range records {
+		uid := r.FolloweeID
+		u, ok := userMap[uid]
+		if !ok || u == nil {
+			continue
+		}
+
+		sp := domain.SimpleUserProfile{
+			Id:         uid,
+			UserName:   u.Username,
+			AvatarUrl:  u.AvatarUrl,
+			IsFollowing: followingMap[uid],
+			FollowedYou: followedByMap[uid],
+			IsMe:        viewerID != 0 && viewerID == uid,
+		}
+		result = append(result, sp)
+	}
+
+	return &FollowListResult{
+		Users:      result,
+		NextCursor: nextCursor,
+		HasMore:    hasMore,
+	}, nil
 }
 
 

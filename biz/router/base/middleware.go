@@ -185,3 +185,13 @@ func _unfollowuserMw() []app.HandlerFunc {
 	// your code...
 	return nil
 }
+
+func _getfolloweesMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}
+
+func _getfollowersMw() []app.HandlerFunc {
+	// your code...
+	return nil
+}

@@ -908,7 +908,7 @@ func (p *SimpleUserProfile) String() string {
  * - cursor: opaque offset/cursor for pagination (0 or missing = first page).
  * - limit: page size (optional, server may cap it, e.g. 20).
  */
-type ListFollowersReq struct {
+type GetFollowersReq struct {
 	TargetUserId int64 `thrift:"targetUserId,1" json:"targetUserId" query:"user_id"`
 	// optional, 0 for first page
 	Cursor int64 `thrift:"cursor,2" json:"cursor" query:"cursor"`
@@ -916,32 +916,32 @@ type ListFollowersReq struct {
 	Limit int32 `thrift:"limit,3" json:"limit" query:"limit"`
 }
 
-func NewListFollowersReq() *ListFollowersReq {
-	return &ListFollowersReq{}
+func NewGetFollowersReq() *GetFollowersReq {
+	return &GetFollowersReq{}
 }
 
-func (p *ListFollowersReq) InitDefault() {
+func (p *GetFollowersReq) InitDefault() {
 }
 
-func (p *ListFollowersReq) GetTargetUserId() (v int64) {
+func (p *GetFollowersReq) GetTargetUserId() (v int64) {
 	return p.TargetUserId
 }
 
-func (p *ListFollowersReq) GetCursor() (v int64) {
+func (p *GetFollowersReq) GetCursor() (v int64) {
 	return p.Cursor
 }
 
-func (p *ListFollowersReq) GetLimit() (v int32) {
+func (p *GetFollowersReq) GetLimit() (v int32) {
 	return p.Limit
 }
 
-var fieldIDToName_ListFollowersReq = map[int16]string{
+var fieldIDToName_GetFollowersReq = map[int16]string{
 	1: "targetUserId",
 	2: "cursor",
 	3: "limit",
 }
 
-func (p *ListFollowersReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *GetFollowersReq) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -1003,7 +1003,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ListFollowersReq[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetFollowersReq[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -1013,7 +1013,7 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ListFollowersReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *GetFollowersReq) ReadField1(iprot thrift.TProtocol) error {
 
 	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -1024,7 +1024,7 @@ func (p *ListFollowersReq) ReadField1(iprot thrift.TProtocol) error {
 	p.TargetUserId = _field
 	return nil
 }
-func (p *ListFollowersReq) ReadField2(iprot thrift.TProtocol) error {
+func (p *GetFollowersReq) ReadField2(iprot thrift.TProtocol) error {
 
 	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -1035,7 +1035,7 @@ func (p *ListFollowersReq) ReadField2(iprot thrift.TProtocol) error {
 	p.Cursor = _field
 	return nil
 }
-func (p *ListFollowersReq) ReadField3(iprot thrift.TProtocol) error {
+func (p *GetFollowersReq) ReadField3(iprot thrift.TProtocol) error {
 
 	var _field int32
 	if v, err := iprot.ReadI32(); err != nil {
@@ -1047,9 +1047,9 @@ func (p *ListFollowersReq) ReadField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ListFollowersReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersReq) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ListFollowersReq"); err != nil {
+	if err = oprot.WriteStructBegin("GetFollowersReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -1083,7 +1083,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ListFollowersReq) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersReq) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("targetUserId", thrift.I64, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1100,7 +1100,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ListFollowersReq) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersReq) writeField2(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("cursor", thrift.I64, 2); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1117,7 +1117,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ListFollowersReq) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersReq) writeField3(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("limit", thrift.I32, 3); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1134,15 +1134,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ListFollowersReq) String() string {
+func (p *GetFollowersReq) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("ListFollowersReq(%+v)", *p)
+	return fmt.Sprintf("GetFollowersReq(%+v)", *p)
 
 }
 
-type ListFollowersResp struct {
+type GetFollowersResp struct {
 	IsSuccessful bool   `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
 	ErrorMessage string `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
 	// Followers of targetUserId
@@ -1152,34 +1152,34 @@ type ListFollowersResp struct {
 	HasMore    bool  `thrift:"hasMore,5" form:"hasMore" json:"hasMore" query:"hasMore"`
 }
 
-func NewListFollowersResp() *ListFollowersResp {
-	return &ListFollowersResp{}
+func NewGetFollowersResp() *GetFollowersResp {
+	return &GetFollowersResp{}
 }
 
-func (p *ListFollowersResp) InitDefault() {
+func (p *GetFollowersResp) InitDefault() {
 }
 
-func (p *ListFollowersResp) GetIsSuccessful() (v bool) {
+func (p *GetFollowersResp) GetIsSuccessful() (v bool) {
 	return p.IsSuccessful
 }
 
-func (p *ListFollowersResp) GetErrorMessage() (v string) {
+func (p *GetFollowersResp) GetErrorMessage() (v string) {
 	return p.ErrorMessage
 }
 
-func (p *ListFollowersResp) GetUsers() (v []*SimpleUserProfile) {
+func (p *GetFollowersResp) GetUsers() (v []*SimpleUserProfile) {
 	return p.Users
 }
 
-func (p *ListFollowersResp) GetNextCursor() (v int64) {
+func (p *GetFollowersResp) GetNextCursor() (v int64) {
 	return p.NextCursor
 }
 
-func (p *ListFollowersResp) GetHasMore() (v bool) {
+func (p *GetFollowersResp) GetHasMore() (v bool) {
 	return p.HasMore
 }
 
-var fieldIDToName_ListFollowersResp = map[int16]string{
+var fieldIDToName_GetFollowersResp = map[int16]string{
 	1: "isSuccessful",
 	2: "errorMessage",
 	3: "users",
@@ -1187,7 +1187,7 @@ var fieldIDToName_ListFollowersResp = map[int16]string{
 	5: "hasMore",
 }
 
-func (p *ListFollowersResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *GetFollowersResp) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -1265,7 +1265,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ListFollowersResp[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetFollowersResp[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -1275,7 +1275,7 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ListFollowersResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *GetFollowersResp) ReadField1(iprot thrift.TProtocol) error {
 
 	var _field bool
 	if v, err := iprot.ReadBool(); err != nil {
@@ -1286,7 +1286,7 @@ func (p *ListFollowersResp) ReadField1(iprot thrift.TProtocol) error {
 	p.IsSuccessful = _field
 	return nil
 }
-func (p *ListFollowersResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *GetFollowersResp) ReadField2(iprot thrift.TProtocol) error {
 
 	var _field string
 	if v, err := iprot.ReadString(); err != nil {
@@ -1297,7 +1297,7 @@ func (p *ListFollowersResp) ReadField2(iprot thrift.TProtocol) error {
 	p.ErrorMessage = _field
 	return nil
 }
-func (p *ListFollowersResp) ReadField3(iprot thrift.TProtocol) error {
+func (p *GetFollowersResp) ReadField3(iprot thrift.TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return err
@@ -1320,7 +1320,7 @@ func (p *ListFollowersResp) ReadField3(iprot thrift.TProtocol) error {
 	p.Users = _field
 	return nil
 }
-func (p *ListFollowersResp) ReadField4(iprot thrift.TProtocol) error {
+func (p *GetFollowersResp) ReadField4(iprot thrift.TProtocol) error {
 
 	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -1331,7 +1331,7 @@ func (p *ListFollowersResp) ReadField4(iprot thrift.TProtocol) error {
 	p.NextCursor = _field
 	return nil
 }
-func (p *ListFollowersResp) ReadField5(iprot thrift.TProtocol) error {
+func (p *GetFollowersResp) ReadField5(iprot thrift.TProtocol) error {
 
 	var _field bool
 	if v, err := iprot.ReadBool(); err != nil {
@@ -1343,9 +1343,9 @@ func (p *ListFollowersResp) ReadField5(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ListFollowersResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersResp) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ListFollowersResp"); err != nil {
+	if err = oprot.WriteStructBegin("GetFollowersResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -1387,7 +1387,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ListFollowersResp) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersResp) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("isSuccessful", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1404,7 +1404,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ListFollowersResp) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersResp) writeField2(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("errorMessage", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1421,7 +1421,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ListFollowersResp) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersResp) writeField3(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("users", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1446,7 +1446,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ListFollowersResp) writeField4(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersResp) writeField4(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("nextCursor", thrift.I64, 4); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1463,7 +1463,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *ListFollowersResp) writeField5(oprot thrift.TProtocol) (err error) {
+func (p *GetFollowersResp) writeField5(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("hasMore", thrift.BOOL, 5); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1480,21 +1480,21 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *ListFollowersResp) String() string {
+func (p *GetFollowersResp) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("ListFollowersResp(%+v)", *p)
+	return fmt.Sprintf("GetFollowersResp(%+v)", *p)
 
 }
 
 /**
- * List users that the target user is FOLLOWING.
+ * Get users that the target user is FOLLOWING.
  *
  * - viewer is taken from JWT.
  * - targetUserId: whose "following" list we are listing.
  */
-type ListFollowingReq struct {
+type GetFolloweesReq struct {
 	TargetUserId int64 `thrift:"targetUserId,1" json:"targetUserId" query:"user_id"`
 	// optional, 0 for first page
 	Cursor int64 `thrift:"cursor,2" json:"cursor" query:"cursor"`
@@ -1502,32 +1502,32 @@ type ListFollowingReq struct {
 	Limit int32 `thrift:"limit,3" json:"limit" query:"limit"`
 }
 
-func NewListFollowingReq() *ListFollowingReq {
-	return &ListFollowingReq{}
+func NewGetFolloweesReq() *GetFolloweesReq {
+	return &GetFolloweesReq{}
 }
 
-func (p *ListFollowingReq) InitDefault() {
+func (p *GetFolloweesReq) InitDefault() {
 }
 
-func (p *ListFollowingReq) GetTargetUserId() (v int64) {
+func (p *GetFolloweesReq) GetTargetUserId() (v int64) {
 	return p.TargetUserId
 }
 
-func (p *ListFollowingReq) GetCursor() (v int64) {
+func (p *GetFolloweesReq) GetCursor() (v int64) {
 	return p.Cursor
 }
 
-func (p *ListFollowingReq) GetLimit() (v int32) {
+func (p *GetFolloweesReq) GetLimit() (v int32) {
 	return p.Limit
 }
 
-var fieldIDToName_ListFollowingReq = map[int16]string{
+var fieldIDToName_GetFolloweesReq = map[int16]string{
 	1: "targetUserId",
 	2: "cursor",
 	3: "limit",
 }
 
-func (p *ListFollowingReq) Read(iprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesReq) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -1589,7 +1589,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ListFollowingReq[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetFolloweesReq[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -1599,7 +1599,7 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ListFollowingReq) ReadField1(iprot thrift.TProtocol) error {
+func (p *GetFolloweesReq) ReadField1(iprot thrift.TProtocol) error {
 
 	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -1610,7 +1610,7 @@ func (p *ListFollowingReq) ReadField1(iprot thrift.TProtocol) error {
 	p.TargetUserId = _field
 	return nil
 }
-func (p *ListFollowingReq) ReadField2(iprot thrift.TProtocol) error {
+func (p *GetFolloweesReq) ReadField2(iprot thrift.TProtocol) error {
 
 	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -1621,7 +1621,7 @@ func (p *ListFollowingReq) ReadField2(iprot thrift.TProtocol) error {
 	p.Cursor = _field
 	return nil
 }
-func (p *ListFollowingReq) ReadField3(iprot thrift.TProtocol) error {
+func (p *GetFolloweesReq) ReadField3(iprot thrift.TProtocol) error {
 
 	var _field int32
 	if v, err := iprot.ReadI32(); err != nil {
@@ -1633,9 +1633,9 @@ func (p *ListFollowingReq) ReadField3(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ListFollowingReq) Write(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesReq) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ListFollowingReq"); err != nil {
+	if err = oprot.WriteStructBegin("GetFolloweesReq"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -1669,7 +1669,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ListFollowingReq) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesReq) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("targetUserId", thrift.I64, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1686,7 +1686,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ListFollowingReq) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesReq) writeField2(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("cursor", thrift.I64, 2); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1703,7 +1703,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ListFollowingReq) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesReq) writeField3(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("limit", thrift.I32, 3); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1720,15 +1720,15 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ListFollowingReq) String() string {
+func (p *GetFolloweesReq) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("ListFollowingReq(%+v)", *p)
+	return fmt.Sprintf("GetFolloweesReq(%+v)", *p)
 
 }
 
-type ListFollowingResp struct {
+type GetFolloweesResp struct {
 	IsSuccessful bool   `thrift:"isSuccessful,1" form:"isSuccessful" json:"isSuccessful" query:"isSuccessful"`
 	ErrorMessage string `thrift:"errorMessage,2" form:"errorMessage" json:"errorMessage" query:"errorMessage"`
 	// People that targetUserId is following
@@ -1738,34 +1738,34 @@ type ListFollowingResp struct {
 	HasMore    bool  `thrift:"hasMore,5" form:"hasMore" json:"hasMore" query:"hasMore"`
 }
 
-func NewListFollowingResp() *ListFollowingResp {
-	return &ListFollowingResp{}
+func NewGetFolloweesResp() *GetFolloweesResp {
+	return &GetFolloweesResp{}
 }
 
-func (p *ListFollowingResp) InitDefault() {
+func (p *GetFolloweesResp) InitDefault() {
 }
 
-func (p *ListFollowingResp) GetIsSuccessful() (v bool) {
+func (p *GetFolloweesResp) GetIsSuccessful() (v bool) {
 	return p.IsSuccessful
 }
 
-func (p *ListFollowingResp) GetErrorMessage() (v string) {
+func (p *GetFolloweesResp) GetErrorMessage() (v string) {
 	return p.ErrorMessage
 }
 
-func (p *ListFollowingResp) GetUsers() (v []*SimpleUserProfile) {
+func (p *GetFolloweesResp) GetUsers() (v []*SimpleUserProfile) {
 	return p.Users
 }
 
-func (p *ListFollowingResp) GetNextCursor() (v int64) {
+func (p *GetFolloweesResp) GetNextCursor() (v int64) {
 	return p.NextCursor
 }
 
-func (p *ListFollowingResp) GetHasMore() (v bool) {
+func (p *GetFolloweesResp) GetHasMore() (v bool) {
 	return p.HasMore
 }
 
-var fieldIDToName_ListFollowingResp = map[int16]string{
+var fieldIDToName_GetFolloweesResp = map[int16]string{
 	1: "isSuccessful",
 	2: "errorMessage",
 	3: "users",
@@ -1773,7 +1773,7 @@ var fieldIDToName_ListFollowingResp = map[int16]string{
 	5: "hasMore",
 }
 
-func (p *ListFollowingResp) Read(iprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesResp) Read(iprot thrift.TProtocol) (err error) {
 
 	var fieldTypeId thrift.TType
 	var fieldId int16
@@ -1851,7 +1851,7 @@ ReadStructBeginError:
 ReadFieldBeginError:
 	return thrift.PrependError(fmt.Sprintf("%T read field %d begin error: ", p, fieldId), err)
 ReadFieldError:
-	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_ListFollowingResp[fieldId]), err)
+	return thrift.PrependError(fmt.Sprintf("%T read field %d '%s' error: ", p, fieldId, fieldIDToName_GetFolloweesResp[fieldId]), err)
 SkipFieldError:
 	return thrift.PrependError(fmt.Sprintf("%T field %d skip type %d error: ", p, fieldId, fieldTypeId), err)
 
@@ -1861,7 +1861,7 @@ ReadStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T read struct end error: ", p), err)
 }
 
-func (p *ListFollowingResp) ReadField1(iprot thrift.TProtocol) error {
+func (p *GetFolloweesResp) ReadField1(iprot thrift.TProtocol) error {
 
 	var _field bool
 	if v, err := iprot.ReadBool(); err != nil {
@@ -1872,7 +1872,7 @@ func (p *ListFollowingResp) ReadField1(iprot thrift.TProtocol) error {
 	p.IsSuccessful = _field
 	return nil
 }
-func (p *ListFollowingResp) ReadField2(iprot thrift.TProtocol) error {
+func (p *GetFolloweesResp) ReadField2(iprot thrift.TProtocol) error {
 
 	var _field string
 	if v, err := iprot.ReadString(); err != nil {
@@ -1883,7 +1883,7 @@ func (p *ListFollowingResp) ReadField2(iprot thrift.TProtocol) error {
 	p.ErrorMessage = _field
 	return nil
 }
-func (p *ListFollowingResp) ReadField3(iprot thrift.TProtocol) error {
+func (p *GetFolloweesResp) ReadField3(iprot thrift.TProtocol) error {
 	_, size, err := iprot.ReadListBegin()
 	if err != nil {
 		return err
@@ -1906,7 +1906,7 @@ func (p *ListFollowingResp) ReadField3(iprot thrift.TProtocol) error {
 	p.Users = _field
 	return nil
 }
-func (p *ListFollowingResp) ReadField4(iprot thrift.TProtocol) error {
+func (p *GetFolloweesResp) ReadField4(iprot thrift.TProtocol) error {
 
 	var _field int64
 	if v, err := iprot.ReadI64(); err != nil {
@@ -1917,7 +1917,7 @@ func (p *ListFollowingResp) ReadField4(iprot thrift.TProtocol) error {
 	p.NextCursor = _field
 	return nil
 }
-func (p *ListFollowingResp) ReadField5(iprot thrift.TProtocol) error {
+func (p *GetFolloweesResp) ReadField5(iprot thrift.TProtocol) error {
 
 	var _field bool
 	if v, err := iprot.ReadBool(); err != nil {
@@ -1929,9 +1929,9 @@ func (p *ListFollowingResp) ReadField5(iprot thrift.TProtocol) error {
 	return nil
 }
 
-func (p *ListFollowingResp) Write(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesResp) Write(oprot thrift.TProtocol) (err error) {
 	var fieldId int16
-	if err = oprot.WriteStructBegin("ListFollowingResp"); err != nil {
+	if err = oprot.WriteStructBegin("GetFolloweesResp"); err != nil {
 		goto WriteStructBeginError
 	}
 	if p != nil {
@@ -1973,7 +1973,7 @@ WriteStructEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write struct end error: ", p), err)
 }
 
-func (p *ListFollowingResp) writeField1(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesResp) writeField1(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("isSuccessful", thrift.BOOL, 1); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -1990,7 +1990,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 1 end error: ", p), err)
 }
 
-func (p *ListFollowingResp) writeField2(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesResp) writeField2(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("errorMessage", thrift.STRING, 2); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -2007,7 +2007,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 2 end error: ", p), err)
 }
 
-func (p *ListFollowingResp) writeField3(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesResp) writeField3(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("users", thrift.LIST, 3); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -2032,7 +2032,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 3 end error: ", p), err)
 }
 
-func (p *ListFollowingResp) writeField4(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesResp) writeField4(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("nextCursor", thrift.I64, 4); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -2049,7 +2049,7 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 4 end error: ", p), err)
 }
 
-func (p *ListFollowingResp) writeField5(oprot thrift.TProtocol) (err error) {
+func (p *GetFolloweesResp) writeField5(oprot thrift.TProtocol) (err error) {
 	if err = oprot.WriteFieldBegin("hasMore", thrift.BOOL, 5); err != nil {
 		goto WriteFieldBeginError
 	}
@@ -2066,11 +2066,11 @@ WriteFieldEndError:
 	return thrift.PrependError(fmt.Sprintf("%T write field 5 end error: ", p), err)
 }
 
-func (p *ListFollowingResp) String() string {
+func (p *GetFolloweesResp) String() string {
 	if p == nil {
 		return "<nil>"
 	}
-	return fmt.Sprintf("ListFollowingResp(%+v)", *p)
+	return fmt.Sprintf("GetFolloweesResp(%+v)", *p)
 
 }
 

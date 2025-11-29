@@ -18,6 +18,9 @@ service UserService {
     user.FollowUserResp FollowUser(1: user.FollowUserReq request) (api.post="/user/follow");
     user.UnfollowUserResp UnfollowUser(1: user.UnfollowUserReq request) (api.post="/user/unfollow");
     user.GetUserProfileResp GetUserProfile(1: user.GetUserProfileReq request) (api.get="/user/profile");
+
+    user.GetFolloweesResp GetFollowees(1: user.GetFolloweesReq request) (api.get="/user/followees");
+    user.GetFollowersResp GetFollowers(1: user.GetFollowersReq request) (api.get="/user/followers");
 }
 
 service NumberOperationService {

@@ -48,13 +48,13 @@ struct SimpleUserProfile {
  * - cursor: opaque offset/cursor for pagination (0 or missing = first page).
  * - limit: page size (optional, server may cap it, e.g. 20).
  */
-struct ListFollowersReq {
+struct GetFollowersReq {
     1: i64 targetUserId (api.query = "user_id");
     2: i64 cursor       (api.query = "cursor");   // optional, 0 for first page
     3: i32 limit        (api.query = "limit");    // optional, default by server
 }
 
-struct ListFollowersResp {
+struct GetFollowersResp {
     1: bool   isSuccessful;
     2: string errorMessage;
     // Followers of targetUserId
@@ -65,18 +65,18 @@ struct ListFollowersResp {
 }
 
 /**
- * List users that the target user is FOLLOWING.
+ * Get users that the target user is FOLLOWING.
  *
  * - viewer is taken from JWT.
  * - targetUserId: whose "following" list we are listing.
  */
-struct ListFollowingReq {
+struct GetFolloweesReq {
     1: i64 targetUserId (api.query = "user_id");
     2: i64 cursor       (api.query = "cursor");   // optional, 0 for first page
     3: i32 limit        (api.query = "limit");    // optional, default by server
 }
 
-struct ListFollowingResp {
+struct GetFolloweesResp {
     1: bool   isSuccessful;
     2: string errorMessage;
     // People that targetUserId is following

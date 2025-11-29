@@ -30,6 +30,23 @@ func GetStats(ctx context.Context, userID int64) (*domain.UserStats, error) {
     return &us, nil
 }
 
+func GetStatsBatch(ctx context.Context, userIDs []int64) (map[int64]*domain.UserStats, error) {
+    var statsList []domain.UserStats
+    err := DB.DB.WithContext(ctx).
+        Where("user_id IN ?", userIDs).
+        Find(&statsList).Error
+    if err != nil {
+        return nil, err
+    }
+
+    statsMap := make(map[int64]*domain.UserStats)
+    for _, stats := range statsList {
+        s := stats // create a copy to avoid referencing the loop variable
+        statsMap[stats.UserID] = &s
+    }
+    return statsMap, nil
+}
+
 // （预留：以后可以加 IncrementFollowers / IncrementFollowing / IncrementPostLikeReceived 等）
 func IncrementFollowers(ctx context.Context, userID int64, delta int64) error {
     return DB.DB.WithContext(ctx).
